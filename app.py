@@ -14,9 +14,19 @@ app.secret_key = os.urandom(24)
 # ─── Настройки ──────────────────────────────────────────────
 MAX_LOGIN_ATTEMPTS = 3
 BLOCK_DURATION = timedelta(minutes=15)
-DB_PATH = "users.db"
+
+# Vercel-де тек /tmp папкасына файл жазуға болады
+DB_PATH = "/tmp/users.db"
 
 # ─── База данных ────────────────────────────────────────────
+def get_db():
+    # Егер база файлы жоқ болса, оны құрып аламыз
+    if not os.path.exists(DB_PATH):
+        init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -41,10 +51,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+# Бұл функцияны бір рет іске қосамыз
+init_db()
 
 # ─── Защита от брутфорса ────────────────────────────────────
 def get_client_ip():
@@ -52,27 +60,27 @@ def get_client_ip():
 
 def is_ip_blocked(ip):
     conn = get_db()
-    # Проверяем перманентную блокировку
     blocked = conn.execute("SELECT * FROM blocked_ips WHERE ip=?", (ip,)).fetchone()
     if blocked:
         conn.close()
         return True, "permanently"
     
-    # Проверяем временную блокировку
     row = conn.execute("SELECT * FROM login_attempts WHERE ip=?", (ip,)).fetchone()
     conn.close()
     
     if row and row['blocked_until']:
-        blocked_until = datetime.fromisoformat(str(row['blocked_until']))
-        if datetime.now() < blocked_until:
-            remaining = int((blocked_until - datetime.now()).total_seconds() / 60)
-            return True, f"{remaining} минут"
+        try:
+            blocked_until = datetime.fromisoformat(str(row['blocked_until']))
+            if datetime.now() < blocked_until:
+                remaining = int((blocked_until - datetime.now()).total_seconds() / 60)
+                return True, f"{remaining} минут"
+        except:
+            pass
     return False, None
 
 def record_failed_attempt(ip):
     conn = get_db()
     row = conn.execute("SELECT * FROM login_attempts WHERE ip=?", (ip,)).fetchone()
-    
     if row:
         attempts = row['attempts'] + 1
         blocked_until = None
@@ -119,23 +127,16 @@ def validate_password(password):
 
 # ─── Email хабарлама ────────────────────────────────────────
 def send_email(to_email, subject, body):
-    """
-    Нақты email жіберу үшін SMTP_EMAIL және SMTP_PASS env айнымалыларын орнат.
-    Мысалы: Gmail App Password пайдалан.
-    """
     smtp_email = os.environ.get("SMTP_EMAIL")
     smtp_pass = os.environ.get("SMTP_PASS")
-    
     if not smtp_email or not smtp_pass:
         print(f"[EMAIL SIM] To: {to_email} | Subject: {subject}\n{body}")
         return True
-    
     try:
         msg = MIMEText(body, 'plain', 'utf-8')
         msg['Subject'] = subject
         msg['From'] = smtp_email
         msg['To'] = to_email
-        
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(smtp_email, smtp_pass)
             server.send_message(msg)
@@ -203,7 +204,6 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     ip = get_client_ip()
-    
     blocked, reason = is_ip_blocked(ip)
     if blocked:
         if reason == "permanently":
@@ -251,10 +251,8 @@ def logout():
     flash('Шықтыңыз', 'info')
     return redirect(url_for('login'))
 
-# ─── Admin: IP блоктау ──────────────────────────────────────
 @app.route('/admin/block/<ip>')
 def block_ip(ip):
-    # Нақты жобада admin аутентификация қос!
     conn = get_db()
     conn.execute("INSERT OR IGNORE INTO blocked_ips (ip, reason) VALUES (?, 'manual')", (ip,))
     conn.commit()
