@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кіру — Apex</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810;
+    --panel: #0a0f1e;
+    --border: #1a2744;
+    --accent: #00d4ff;
+    --accent2: #ff3c6e;
+    --text: #c8d8f0;
+    --muted: #4a6080;
+    --success: #00ff9d;
+    --error: #ff3c6e;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font: 'Rajdhani', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Фон сеткасы */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Жарық шеңберлер */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width:400px; height:400px; background:rgba(0,212,255,0.06); top:-100px; right:-100px; }
+  .orb-2 { width:300px; height:300px; background:rgba(255,60,110,0.05); bottom:-50px; left:-50px; }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+  }
+
+  /* Логотип */
+  .logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo-text {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,212,255,0.5);
+  }
+  .logo-sub {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* Карточка */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 36px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(0,212,255,0.1);
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: white;
+    margin-bottom: 6px;
+  }
+  .card-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+    font-family: var(--font-mono);
+  }
+
+  /* Flash хабарлар */
+  .flash {
+    padding: 10px 14px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flash::before { content: '▶'; font-size: 0.7rem; }
+  .flash-error { background: rgba(255,60,110,0.1); border: 1px solid rgba(255,60,110,0.3); color: var(--error); }
+  .flash-success { background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.3); color: var(--success); }
+  .flash-info { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); color: var(--accent); }
+
+  /* Form */
+  .form-group { margin-bottom: 20px; }
+  label {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+  }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0,212,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    outline: none;
+  }
+  input:focus {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.06);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.08), 0 0 12px rgba(0,212,255,0.1);
+  }
+  input::placeholder { color: var(--muted); }
+
+  /* Батырма */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s;
+    z-index: 0;
+  }
+  .btn:hover::before { transform: scaleX(1); }
+  .btn:hover { color: var(--bg); }
+  .btn span { position: relative; z-index: 1; }
+
+  /* Сілтеме */
+  .link-row {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .link-row a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: text-shadow 0.2s;
+  }
+  .link-row a:hover { text-shadow: 0 0 8px var(--accent); }
+
+  /* Blocked state */
+  .blocked-msg {
+    text-align: center;
+    padding: 20px;
+    font-family: var(--font-mono);
+    color: var(--error);
+    font-size: 0.9rem;
+    border: 1px solid rgba(255,60,110,0.3);
+    border-radius: 3px;
+    background: rgba(255,60,110,0.05);
+  }
+
+  /* Corner декорация */
+  .corner {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .corner-tl { top:8px; left:8px; border-width: 1px 0 0 1px; }
+  .corner-tr { top:8px; right:8px; border-width: 1px 1px 0 0; }
+  .corner-bl { bottom:8px; left:8px; border-width: 0 0 1px 1px; }
+  .corner-br { bottom:8px; right:8px; border-width: 0 1px 1px 0; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .cursor::after { content:'_'; animation: blink 1s infinite; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="container">
+  <div class="logo">
+    <div class="logo-text">APEX</div>
+    <div class="logo-sub">Secure Access Portal</div>
+  </div>
+
+  <div class="card">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="card-title">Кіру</div>
+    <div class="card-sub">// auth.login<span class="cursor"></span></div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% if blocked %}
+      <div class="blocked-msg">⛔ Қол жеткізу уақытша шектелген.<br>Кейінірек қайталаңыз.</div>
+    {% else %}
+    <form method="POST" autocomplete="off">
+      <div class="form-group">
+        <label>Пайдаланушы аты / Email</label>
+        <input type="text" name="username" placeholder="username немесе email" required>
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn"><span>Кіру →</span></button>
+    </form>
+    {% endif %}
+
+    <div class="link-row">
+      Аккаунт жоқ па? <a href="{{ url_for('register') }}">Тіркелу</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

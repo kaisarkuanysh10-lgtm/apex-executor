@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Apex</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810; --panel: #0a0f1e; --border: #1a2744;
+    --accent: #00d4ff; --accent2: #ff3c6e; --text: #c8d8f0;
+    --muted: #4a6080; --success: #00ff9d;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font: 'Rajdhani', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; display:flex; align-items:center; justify-content:center; position:relative; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; }
+  .orb { position:fixed; border-radius:50%; filter:blur(80px); pointer-events:none; }
+  .orb-1 { width:500px; height:500px; background:rgba(0,212,255,0.05); top:-150px; right:-150px; }
+  .orb-2 { width:400px; height:400px; background:rgba(0,255,157,0.03); bottom:-100px; left:-100px; }
+  .container { position:relative; z-index:1; width:100%; max-width:500px; padding:20px; text-align:center; }
+  .logo-text { font-family:var(--font-mono); font-size:1.5rem; letter-spacing:0.3em; color:var(--accent); text-shadow:0 0 20px rgba(0,212,255,0.5); margin-bottom:32px; display:block; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:40px; position:relative; box-shadow:0 0 40px rgba(0,0,0,0.6); }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--success),transparent); }
+  .status { width:48px; height:48px; border-radius:50%; background:rgba(0,255,157,0.1); border:2px solid var(--success); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:1.2rem; box-shadow:0 0 20px rgba(0,255,157,0.3); }
+  h1 { font-size:1.6rem; font-weight:700; letter-spacing:0.05em; color:white; margin-bottom:8px; }
+  .username { color:var(--accent); }
+  .sub { font-family:var(--font-mono); font-size:0.8rem; color:var(--muted); margin-bottom:32px; }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .info-item { background:rgba(0,212,255,0.04); border:1px solid var(--border); border-radius:3px; padding:14px; text-align:left; }
+  .info-label { font-family:var(--font-mono); font-size:0.68rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+  .info-value { font-family:var(--font-mono); font-size:0.9rem; color:var(--success); }
+  .btn-logout { display:inline-block; padding:11px 28px; background:transparent; border:1px solid var(--accent2); color:var(--accent2); font-family:var(--font-mono); font-size:0.85rem; letter-spacing:0.15em; text-transform:uppercase; text-decoration:none; border-radius:3px; transition:all 0.2s; position:relative; overflow:hidden; }
+  .btn-logout::before { content:''; position:absolute; inset:0; background:var(--accent2); transform:scaleX(0); transform-origin:left; transition:transform 0.2s; z-index:0; }
+  .btn-logout:hover::before { transform:scaleX(1); }
+  .btn-logout:hover { color:var(--bg); }
+  .btn-logout span { position:relative; z-index:1; }
+  .corner { position:absolute; width:12px; height:12px; border-color:var(--success); border-style:solid; opacity:0.4; }
+  .corner-tl { top:8px; left:8px; border-width:1px 0 0 1px; }
+  .corner-tr { top:8px; right:8px; border-width:1px 1px 0 0; }
+  .corner-bl { bottom:8px; left:8px; border-width:0 0 1px 1px; }
+  .corner-br { bottom:8px; right:8px; border-width:0 1px 1px 0; }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="container">
+  <span class="logo-text">APEX</span>
+  <div class="card">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+    <div class="status">✓</div>
+    <h1>Сәлем, <span class="username">{{ username }}</span>!</h1>
+    <div class="sub">// access.granted — authentication successful</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Status</div>
+        <div class="info-value">ONLINE</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Security</div>
+        <div class="info-value">ACTIVE</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="btn-logout"><span>Шығу →</span></a>
+  </div>
+</div>
+</body>
+</html>
