@@ -260,5 +260,3 @@ def block_ip(ip):
     conn.commit()
     conn.close()
     return jsonify({"status": "blocked", "ip": ip})
-
-init_db()
