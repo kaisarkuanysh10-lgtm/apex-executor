@@ -177,10 +177,17 @@ def clear_block(ip):
 # VALIDATION
 # ═══════════════════════════════════════════════════
 def valid_email(e): return bool(re.match(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$', e))
+BAD_WORDS = ["fuck","shit","ass","bitch","cunt","dick","pussy","cock","nigger","fag","whore","slut","rape","nazi","porn","nude"]
+
 def valid_username(u):
     if len(u) < 4: return False, "Username must be at least 4 characters"
     if len(u) > 20: return False, "Max 20 characters"
-    if not re.match(r'^[a-zA-Z0-9_]+$', u): return False, "Only letters, numbers, underscores"
+    if not re.match(r"^[a-zA-Z0-9_]+$", u): return False, "Only English letters, numbers, and _"
+    if u.count("_") > 1: return False, "Only one underscore (_) allowed"
+    if u.startswith("_") or u.endswith("_"): return False, "Underscore cannot be at start or end"
+    ul = u.lower().replace("_", "")
+    for bw in BAD_WORDS:
+        if bw in ul: return False, "This username contains a prohibited word"
     return True, "ok"
 def valid_pw(pw):
     if len(pw) < 8: return False, "At least 8 characters"
@@ -478,6 +485,7 @@ def sidebar(active="home"):
         ("games", "📊", "Charts", "/games"),
         ("create", "✏️", "Create", "/create"),
         ("avatar", "👤", "Avatar", "/avatar"),
+        ("chat", "💬", "Chat", "/chat"),
         ("party", "🎉", "Party", "#"),
         ("more", "•••", "More", "#"),
     ]
@@ -536,7 +544,7 @@ def auth_page(body, modal="register"):
 <div class="land-bg">{bg}</div>
 <div class="land-overlay"></div>
 <div class="land-logo">APEX<span>STUDIO</span></div>
-{'<a href="/?modal=login"><button class="land-login-btn">Log In</button></a>' if modal=='register' else '<a href="/?modal=register"><button class="land-login-btn">Sign Up</button></a>'}
+<a href="/?modal=login"><button class="land-login-btn">Log In</button></a>
 <div class="land-center">
   <div class="auth-box">
     <div class="auth-tabs">
@@ -604,9 +612,7 @@ def index():
           <div class="fg"><label>Email</label>
           <input type="email" name="email" placeholder="your@email.com" required></div>
           <div class="fg"><label>Password</label>
-          <input type="password" name="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required></div>
-          <div class="fg"><label>Confirm Password</label>
-          <input type="password" name="confirm" placeholder="Repeat password" required></div>
+          <input type="password" name="password" placeholder="Create a password" required></div>
           <button type="submit" class="btn full">Sign Up</button>
         </form>
         <div style="font-size:.72rem;color:rgba(255,255,255,.35);text-align:center;margin-top:12px;line-height:1.5">
@@ -653,15 +659,11 @@ def register():
     password = request.form.get('password','')
     confirm = request.form.get('confirm','')
     err = None
-    if not all([username,email,password,confirm]): err="All fields are required"
+    if not all([username,email,password]): err="All fields are required"
     else:
         ok,msg = valid_username(username)
         if not ok: err=msg
         elif not valid_email(email): err="Invalid email format"
-        elif password != confirm: err="Passwords do not match"
-        else:
-            ok2,msg2 = valid_pw(password)
-            if not ok2: err=msg2
     if err:
         session['auth_err'] = err
         return redirect('/?modal=register')
@@ -830,7 +832,7 @@ def home():
         </div></a>"""
 
     # User games (recent)
-    user_games = q("SELECT g.*,u.username,u.avatar_icon,u.avatar_color FROM games g JOIN users u ON g.creator_id=u.id WHERE g.published=TRUE ORDER BY g.plays DESC LIMIT 8") or []
+    user_games = q("SELECT g.*,u.username,u.avatar_icon,u.avatar_color FROM games g JOIN users u ON g.creator_id=u.id WHERE g.published=TRUE AND g.is_private=FALSE ORDER BY g.plays DESC LIMIT 8") or []
     games_html = ""
     for g in user_games:
         gd = dict(g)
@@ -887,7 +889,8 @@ def games():
     if not user: return redirect('/')
     genre = request.args.get('genre','')
     sq = request.args.get('q','')
-    sql = "SELECT g.*,u.username,u.avatar_icon,u.avatar_color FROM games g JOIN users u ON g.creator_id=u.id WHERE g.published=TRUE"
+    sql = "SELECT g.*,u.username,u.avatar_icon,u.avatar_color FROM games g JOIN users u ON g.creator_id=u.id WHERE g.published=TRUE AND (g.is_private=FALSE OR g.creator_id=%s)"
+    params.append(user['id'])
     params = []
     if genre: sql += " AND g.genre=%s"; params.append(genre)
     if sq: sql += " AND LOWER(g.title) LIKE %s"; params.append(f"%{sq.lower()}%")
@@ -938,6 +941,7 @@ def game_detail(gid):
     g = q("SELECT g.*,u.username,u.avatar_icon,u.avatar_color FROM games g JOIN users u ON g.creator_id=u.id WHERE g.id=%s",(gid,),one=True)
     if not g or not g['published']: return redirect('/games')
     gd = dict(g)
+    if gd.get('is_private') and gd.get('creator_id') != user['id']: return redirect('/games')
 
     # Increment plays
     q("UPDATE games SET plays=plays+1 WHERE id=%s",(gid,),commit=True)
@@ -1008,7 +1012,25 @@ def game_detail(gid):
         </div>
       </div>
       <div>
-        <button class="play-btn">▶ Play</button>
+        <button class="play-btn" id="play-btn" onclick="showLauncher(this)">▶ Play</button>
+        <div id="launcher-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center">
+          <div style="background:#16213e;border:2px solid #1e3a5f;border-radius:20px;padding:40px 36px;max-width:480px;width:92%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.8)">
+            <div style="font-size:3rem;margin-bottom:14px">🚀</div>
+            <div style="font-size:1.4rem;font-weight:900;color:white;margin-bottom:10px">Launch Apex Studio</div>
+            <div style="color:#718096;margin-bottom:28px;line-height:1.7;font-size:.95rem">You need the Apex Studio app to play games.<br>Download it for your system below.</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+              <a href="/download/win64"><button style="padding:13px 24px;background:#e74c3c;color:white;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:.95rem;font-family:inherit;width:100%">⬇ Windows 7 / 10 / 11 (64-bit)</button></a>
+              <a href="/download/linux64"><button style="padding:13px 24px;background:#2c3e50;color:white;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:.95rem;font-family:inherit;width:100%">⬇ Linux 64-bit (Arch, Ubuntu...)</button></a>
+            </div>
+            <div style="font-size:.78rem;color:#4a5568;margin-bottom:16px">Free download • 64-bit • No subscription required</div>
+            <button onclick="closeLauncher()" style="background:transparent;border:1px solid #2d3748;border-radius:8px;color:#718096;cursor:pointer;font-family:inherit;padding:8px 20px">✕ Close</button>
+          </div>
+        </div>
+        <script>
+          function showLauncher(btn){{var m=document.getElementById("launcher-modal");m.style.display="flex";}}
+          function closeLauncher(){{document.getElementById("launcher-modal").style.display="none";}}
+          document.addEventListener("keydown",function(e){{if(e.key==="Escape")closeLauncher();}});
+        </script>
         <div class="action-row">
           <a href="/game/{gid}/like"><div class="action-btn {'liked' if my_review and my_review['liked'] else ''}">👍 {gd['likes']}</div></a>
           <a href="/game/{gid}/dislike"><div class="action-btn {'disliked' if my_review and not my_review['liked'] else ''}">👎 {gd['dislikes']}</div></a>
@@ -1062,14 +1084,17 @@ def create():
         thumb_url = request.form.get('thumbnail_url','').strip()
         max_pl = int(request.form.get('max_players','10'))
         publish = request.form.get('publish','0') == '1'
+        is_priv = request.form.get('is_private','0') == '1'
+        thumb_url2 = request.form.get('thumbnail_url2','').strip()
+        final_thumb = thumb_url2 if thumb_url2 else thumb_url
 
         if not title: msg = al("Game title is required","e")
         elif len(title) < 3: msg = al("Title must be at least 3 characters","e")
         else:
             try:
-                result = q("""INSERT INTO games(title,description,genre,thumbnail_emoji,thumbnail_color,thumbnail_url,creator_id,max_players,published)
-                    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-                    (title,desc,genre,emoji,color,thumb_url,user['id'],max_pl,publish),one=True)
+                result = q("""INSERT INTO games(title,description,genre,thumbnail_emoji,thumbnail_color,thumbnail_url,creator_id,max_players,published,is_private)
+                    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                    (title,desc,genre,emoji,color,final_thumb,user['id'],max_pl,publish,is_priv),one=True)
                 if result:
                     gid = result['id']
                     if publish:
@@ -1127,9 +1152,23 @@ def create():
             <div class="color-grid">{color_opts}</div></div>
             <div class="fg"><label>Thumbnail Image URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
             <input type="url" name="thumbnail_url" placeholder="https://example.com/image.png"></div>
+            <div class="fg"><label>Thumbnail Image URL</label>
+            <input type="url" name="thumbnail_url2" placeholder="Paste a direct image link (https://...)">
+            <div class="hint">The image players will see on your game card</div></div>
+            <div class="fg"><label>Visibility</label>
+            <div style="display:flex;gap:10px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--surf3);border:2px solid var(--border);border-radius:8px;padding:12px 16px;flex:1;transition:all .2s">
+                <input type="radio" name="is_private" value="0" checked style="accent-color:var(--red);width:16px;height:16px">
+                <div><div style="font-weight:800;font-size:.9rem">🌐 Public</div><div style="font-size:.72rem;color:var(--muted);margin-top:2px">Everyone can see & play</div></div>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--surf3);border:2px solid var(--border);border-radius:8px;padding:12px 16px;flex:1;transition:all .2s">
+                <input type="radio" name="is_private" value="1" style="accent-color:var(--red);width:16px;height:16px">
+                <div><div style="font-weight:800;font-size:.9rem">🔒 Private</div><div style="font-size:.72rem;color:var(--muted);margin-top:2px">Only you can see it</div></div>
+              </label>
+            </div></div>
             <div style="display:flex;gap:10px;margin-top:8px">
               <button type="submit" class="btn outline">Save as Draft</button>
-              <button type="submit" name="publish" value="1" class="btn green">🌐 Publish Now</button>
+              <button type="submit" name="publish" value="1" class="btn green">🌐 Publish</button>
             </div>
           </form>
         </div>
@@ -1435,6 +1474,91 @@ def search():
     <div class="page-title" style="margin-bottom:20px">Search: "{q_str}"</div>
     <div class="games-grid">{cards if cards else '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div>No results found for "'+q_str+'"</div>'}</div>"""
     return layout(content, user)
+
+
+# ═══════════════════════════════════════════════════
+# GLOBAL CHAT
+# ═══════════════════════════════════════════════════
+@app.route('/chat', methods=['GET','POST'])
+def chat():
+    user = get_user_dict()
+    if not user: return redirect('/')
+    msg_err = ""
+    if request.method == 'POST':
+        txt = request.form.get('message','').strip()[:300]
+        if txt:
+            q("INSERT INTO messages(user_id,content) VALUES(%s,%s)",(user['id'],txt),commit=True)
+        return redirect('/chat')
+
+    msgs = q("""SELECT m.*,u.username,u.avatar_icon,u.avatar_color
+        FROM messages m JOIN users u ON m.user_id=u.id
+        ORDER BY m.created_at DESC LIMIT 80""") or []
+    msgs = list(reversed(msgs))
+
+    msgs_html = ""
+    for m in msgs:
+        md = dict(m)
+        ts = md['created_at']
+        ts_str = ts.strftime('%H:%M') if hasattr(ts,'strftime') else ''
+        is_me = md['user_id'] == user['id']
+        align = "flex-direction:row-reverse;" if is_me else ""
+        bubble_bg = "var(--red)" if is_me else "var(--surf2)"
+        radius = "12px 4px 12px 12px" if is_me else "4px 12px 12px 12px"
+        name_align = "text-align:right;" if is_me else ""
+        msgs_html += f"""<div style="display:flex;gap:10px;align-items:flex-end;{align}margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:{md['avatar_color']};display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0">{md['avatar_icon']}</div>
+          <div style="max-width:68%">
+            <div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;{name_align}">{md['username']} · {ts_str}</div>
+            <div style="background:{bubble_bg};padding:10px 14px;border-radius:{radius};font-size:.9rem;line-height:1.5;word-break:break-word">{md['content']}</div>
+          </div>
+        </div>"""
+
+    online_html = ""
+    for conn in DEMO_CONNECTIONS:
+        if conn["online"]:
+            online_html += f"""<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+              <div style="width:30px;height:30px;border-radius:50%;background:{conn['color']};display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">{conn['icon']}</div>
+              <div>
+                <div style="font-size:.82rem;font-weight:700">{conn['name']}</div>
+                <div style="font-size:.68rem;color:var(--green)">● {conn['status']}</div>
+              </div>
+            </div>"""
+
+    content = f"""
+    <div class="page-title" style="margin-bottom:16px">💬 Global Chat</div>
+    <div style="display:grid;grid-template-columns:1fr 260px;gap:16px;height:calc(100vh - 150px)">
+      <div style="display:flex;flex-direction:column;background:var(--surf);border-radius:12px;border:1px solid var(--border);overflow:hidden">
+        <div id="msgs" style="flex:1;overflow-y:auto;padding:20px">
+          {msgs_html or '<div class="empty"><div class="empty-icon">💬</div>No messages yet!</div>'}
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surf3)">
+          <form method="POST" style="display:flex;gap:10px" autocomplete="off">
+            <input name="message" placeholder="Type a message... (max 300 chars)" maxlength="300"
+              style="flex:1;padding:11px 16px;background:var(--surf2);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-family:var(--font);font-size:.9rem;outline:none"
+              required autofocus>
+            <button type="submit" class="btn" style="border-radius:24px;padding:11px 20px">Send</button>
+          </form>
+        </div>
+      </div>
+      <div style="background:var(--surf);border-radius:12px;border:1px solid var(--border);padding:16px;overflow-y:auto">
+        <div style="font-size:.88rem;font-weight:800;margin-bottom:12px">🟢 Online ({len([x for x in DEMO_CONNECTIONS if x["online"]])})</div>
+        {online_html}
+      </div>
+    </div>
+    <script>
+      var el=document.getElementById("msgs");
+      if(el) el.scrollTop=el.scrollHeight;
+      setTimeout(function(){{location.reload()}},6000);
+    </script>"""
+    return layout(content, user)
+
+@app.route('/download/win64')
+def dl_win():
+    return redirect('https://github.com')  # placeholder
+
+@app.route('/download/linux64')
+def dl_linux():
+    return redirect('https://github.com')  # placeholder
 
 if __name__ == '__main__':
     init_db()
