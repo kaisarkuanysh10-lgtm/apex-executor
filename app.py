@@ -27,8 +27,12 @@ def init_db():
         avatar_color TEXT DEFAULT '#e74c3c',
         avatar_icon TEXT DEFAULT '😊',
         bio TEXT DEFAULT '',
+        gender TEXT DEFAULT '',
+        birth_year INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
     )""")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT ''")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_year INTEGER DEFAULT 0")
     c.execute("""CREATE TABLE IF NOT EXISTS used_usernames(
         username TEXT PRIMARY KEY,
         released_at TIMESTAMP DEFAULT NOW()
@@ -100,8 +104,11 @@ def q(sql, params=(), one=False, commit=False):
         conn = get_db(); c = conn.cursor()
         c.execute(sql, params)
         if commit:
+            if one:
+                result = c.fetchone()
+            else:
+                result = c.rowcount
             conn.commit()
-            result = c.rowcount
         elif one:
             result = c.fetchone()
         else:
@@ -594,7 +601,7 @@ def index():
         {al(err,'e') if err else ''}{al(flash_s,'s') if flash_s else ''}
         <form method="POST" action="/login" autocomplete="off">
           <div class="fg"><label>Username or Email</label>
-          <input type="text" name="username" placeholder="Enter username or email" required></div>
+          <input type="text" name="username" placeholder="Username" required></div>
           <div class="fg"><label>Password</label>
           <input type="password" name="password" placeholder="Password" required></div>
           <div style="text-align:right;margin-bottom:14px">
@@ -635,7 +642,7 @@ def login():
     username = request.form.get('username','').strip()
     password = request.form.get('password','')
     try:
-        user = q("SELECT * FROM users WHERE (username=%s OR email=%s) AND verified=TRUE", (username,username), one=True)
+        user = q("SELECT * FROM users WHERE username=%s AND verified=TRUE", (username,), one=True)
         if user and check_password_hash(user['password'], password):
             clear_block(ip)
             session['uid'] = user['id']
@@ -659,11 +666,17 @@ def register():
     password = request.form.get('password','')
     confirm = request.form.get('confirm','')
     err = None
-    if not all([username,email,password]): err="All fields are required"
+    email = username.lower() + "@apexstudio.game"  # internal placeholder
+    birth_month = request.form.get('birth_month','')
+    birth_day = request.form.get('birth_day','')
+    birth_year = request.form.get('birth_year','')
+    gender = request.form.get('gender','')
+
+    if not all([username, password, birth_month, birth_day, birth_year]):
+        err = "Please fill in all required fields"
     else:
         ok,msg = valid_username(username)
         if not ok: err=msg
-        elif not valid_email(email): err="Invalid email format"
     if err:
         session['auth_err'] = err
         return redirect('/?modal=register')
@@ -676,15 +689,16 @@ def register():
             return redirect('/?modal=register')
         code = gen_code()
         expires = datetime.now() + timedelta(minutes=10)
-        q("""INSERT INTO verify_codes(email,code,username,password_hash,expires_at)
-            VALUES(%s,%s,%s,%s,%s) ON CONFLICT(email) DO UPDATE SET
-            code=%s,username=%s,password_hash=%s,expires_at=%s,attempts=0""",
-            (email,code,username,generate_password_hash(password),expires,
-             code,username,generate_password_hash(password),expires), commit=True)
-        send_code_email(email, username, code, "verify")
-        session['pending_email'] = email
-        session['pending_uname'] = username
-        return redirect('/verify')
+        # Create account directly - no email verification needed
+        pw_hash = generate_password_hash(password)
+        result = q("INSERT INTO users(username,email,password,verified,gender,birth_year) VALUES(%s,%s,%s,TRUE,%s,%s) RETURNING id",
+            (username, email, pw_hash, gender, int(birth_year) if birth_year.isdigit() else 0), one=True, commit=True)
+        if result:
+            session['uid'] = result['id']
+            return redirect('/home')
+        else:
+            session['auth_err'] = "Account creation failed. Try again."
+            return redirect('/?modal=register')
     except Exception as e:
         session['auth_err'] = f"Error: {str(e)[:60]}"
         return redirect('/?modal=register')
@@ -693,6 +707,8 @@ def register():
 def verify():
     email = session.get('pending_email')
     username = session.get('pending_uname','User')
+    gender = session.get('pending_gender','')
+    birth_year = session.get('pending_birth_year','0')
     if not email: return redirect('/')
     err = ""
     if request.method == 'POST':
@@ -707,6 +723,7 @@ def verify():
         else:
             q("INSERT INTO users(username,email,password,verified) VALUES(%s,%s,%s,TRUE) ON CONFLICT DO NOTHING",
                 (row['username'],email,row['password_hash']),commit=True)
+            q("UPDATE users SET gender=%s,birth_year=%s WHERE email=%s",(gender,int(birth_year) if birth_year.isdigit() else 0,email),commit=True)
             q("DELETE FROM verify_codes WHERE email=%s",(email,),commit=True)
             user = q("SELECT id FROM users WHERE email=%s",(email,),one=True)
             session.pop('pending_email',None); session.pop('pending_uname',None)
