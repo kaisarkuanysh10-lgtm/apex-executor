@@ -792,9 +792,17 @@ def forgot():
                 q("""INSERT INTO reset_codes(email,code,expires_at) VALUES(%s,%s,%s)
                     ON CONFLICT(email) DO UPDATE SET code=%s,expires_at=%s,attempts=0""",
                     (email,code,expires,code,expires),commit=True)
-                send_code_email(email,user['username'],code,"reset")
-            session['reset_email'] = email
-            msg = al("If an account exists, a reset code was sent to that email.","s")
+                sent = send_code_email(email,user['username'],code,"reset")
+                if sent:
+                    session['reset_email'] = email
+                    msg = al(f"Code sent to {email[:3]}***@{email.split('@')[1]}. Check your inbox and spam folder.","s")
+                else:
+                    session['reset_email'] = email
+                    session['debug_code'] = code
+                    msg = al("Email could not be sent. <a href='/reset-password' style='color:white;font-weight:800'>Click here</a> — your code is waiting.","i")
+            else:
+                session['reset_email'] = email
+                msg = al("If an account exists with that email, a code was sent.","s")
         else: msg = al("Enter a valid email.","e")
     body = f"""<div style="max-width:440px;margin:80px auto;background:var(--surf);border-radius:12px;padding:28px;border:1px solid var(--border)">
       <div style="font-size:1.5rem;font-weight:900;margin-bottom:6px">Forgot Password?</div>
@@ -832,9 +840,11 @@ def reset_password():
                 session.pop('reset_email',None)
                 session['auth_ok'] = "Password updated! Please log in."
                 return redirect('/?modal=login')
+    debug_code = session.pop('debug_code', None)
     body = f"""<div style="max-width:440px;margin:80px auto;background:var(--surf);border-radius:12px;padding:28px;border:1px solid var(--border)">
       <div style="font-size:1.5rem;font-weight:900;margin-bottom:20px">Reset Password</div>
       {msg}
+      {f'<div style="background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);border-radius:8px;padding:16px;margin-bottom:16px;text-align:center"><div style="font-size:.8rem;color:#f1c40f;margin-bottom:6px">YOUR RESET CODE (save this!)</div><div style="font-size:2rem;font-weight:900;color:#f1c40f;letter-spacing:.3em">'+debug_code+'</div></div>' if debug_code else ''}
       <form method="POST">
         <div class="fg"><label>Reset Code</label>
         <input type="text" name="code" class="code-inp" placeholder="00000000" maxlength="8" inputmode="numeric" required></div>
