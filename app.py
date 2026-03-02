@@ -91,6 +91,27 @@ def init_db():
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, friend_id)
     )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS notifications(
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        from_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        message TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS bans(
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        reason TEXT DEFAULT '',
+        banned_by INTEGER REFERENCES users(id),
+        expires_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+    )""")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT ''")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_year INTEGER DEFAULT 0")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE")
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE")
     c.execute("""CREATE TABLE IF NOT EXISTS game_plays(
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -512,7 +533,10 @@ def topbar(user):
       </form>
       <div class="topbar-right">
         <div class="apelx-badge">⬡ {udict.get('apelx',0):,} Apelx</div>
-        <button class="notif-btn">🔔</button>
+        <a href="/notifications" style="position:relative">
+          <button class="notif-btn">🔔</button>
+          {f'<span style="position:absolute;top:-2px;right:-2px;background:var(--red);color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center">'+str(unread_count)+'</span>' if (unread_count:=( (q("SELECT COUNT(*) as n FROM notifications WHERE user_id=%s AND is_read=FALSE",(udict["id"],),one=True) or {{}}).get("n",0) )) > 0 else ''}
+        </a>
         <a href="/profile/{udict['id']}">
           <div class="user-pill">
             {user_avatar(udict, 30)}
@@ -632,7 +656,7 @@ def index():
 # ═══════════════════════════════════════════════════
 @app.route('/login', methods=['POST'])
 def login():
-    try: init_db()
+    try: init_db(); ensure_admin()
     except: pass
     ip = get_ip()
     blocked, mins = check_block(ip)
@@ -645,6 +669,11 @@ def login():
         user = q("SELECT * FROM users WHERE username=%s AND verified=TRUE", (username,), one=True)
         if user and check_password_hash(user['password'], password):
             clear_block(ip)
+            if user.get('is_banned'):
+                ban_info = q("SELECT reason,expires_at FROM bans WHERE user_id=%s ORDER BY created_at DESC LIMIT 1",(user['id'],),one=True)
+                reason = dict(ban_info)['reason'] if ban_info else 'Violation of Terms of Use'
+                session['auth_err'] = f"Your account has been banned. Reason: {reason}"
+                return redirect('/?modal=login')
             session['uid'] = user['id']
             return redirect('/home')
         else:
@@ -727,6 +756,11 @@ def verify():
             q("DELETE FROM verify_codes WHERE email=%s",(email,),commit=True)
             user = q("SELECT id FROM users WHERE email=%s",(email,),one=True)
             session.pop('pending_email',None); session.pop('pending_uname',None)
+            if user.get('is_banned'):
+                ban_info = q("SELECT reason,expires_at FROM bans WHERE user_id=%s ORDER BY created_at DESC LIMIT 1",(user['id'],),one=True)
+                reason = dict(ban_info)['reason'] if ban_info else 'Violation of Terms of Use'
+                session['auth_err'] = f"Your account has been banned. Reason: {reason}"
+                return redirect('/?modal=login')
             session['uid'] = user['id']
             return redirect('/home')
     masked = email[:2]+"***@"+email.split('@')[1] if '@' in email else email
@@ -1298,7 +1332,7 @@ def profile(uid):
             <div style="font-size:1.5rem;font-weight:900">{td['username']}</div>
             <div style="font-size:.82rem;color:var(--muted)">Member since {joined.strftime('%B %Y')}</div>
           </div>
-          {'<a href="/settings"><button class="btn outline">⚙ Edit Profile</button></a>' if is_me else '<button class="btn">+ Connect</button>'}
+          {'<a href="/settings"><button class="btn outline">⚙ Edit Profile</button></a>' if is_me else f'<a href="/add-friend/{uid}"><button class="btn">+ Add Friend</button></a>' + (f' <a href="/admin/ban/{uid}"><button class="btn" style="background:#e74c3c;margin-left:6px">🔨 Ban</button></a>' if user and user.get("username")==ADMIN_USERNAME else '')}
         </div>
         {f'<div style="color:var(--muted);font-size:.9rem;margin-bottom:16px">{td["bio"]}</div>' if td.get('bio') else ''}
         <div style="display:flex;gap:24px">
@@ -1406,6 +1440,15 @@ def settings():
                     q("UPDATE users SET password=%s WHERE id=%s",(generate_password_hash(new),user['id']),commit=True)
                     msg = al("Password updated successfully!","s")
 
+        elif action == 'link_email':
+            new_email = request.form.get('new_email','').strip()
+            if not valid_email(new_email): msg = al("Invalid email address","e")
+            else:
+                existing = q("SELECT id FROM users WHERE email=%s AND id!=%s",(new_email,user['id']),one=True)
+                if existing: msg = al("This email is already used by another account","e")
+                else:
+                    q("UPDATE users SET email=%s,email_verified=FALSE WHERE id=%s",(new_email,user['id']),commit=True)
+                    msg = al("Email linked! You can now use it to recover your password.","s")
         elif action == 'update_bio':
             bio = request.form.get('bio','').strip()[:200]
             q("UPDATE users SET bio=%s WHERE id=%s",(bio,user['id']),commit=True)
@@ -1413,17 +1456,36 @@ def settings():
 
         user = get_user_dict()
 
+    real_email = user.get('email','') if not user.get('email','').endswith('@apexstudio.game') else ''
+    email_status = ''
+    if real_email:
+        email_status = f'<span class="badge badge-green">✓ Verified</span>' if user.get('email_verified') else f'<span class="badge badge-yellow">Not verified</span>'
     account_tab = f"""
     <div class="settings-title">Account Info</div>
-    <div style="margin-bottom:16px;padding:14px;background:var(--surf3);border-radius:8px;border:1px solid var(--border)">
-      <div style="color:var(--muted);font-size:.8rem;margin-bottom:2px">Username</div>
-      <div style="font-weight:700">{user['username']}</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:14px;background:var(--surf3);border-radius:8px;border:1px solid var(--border)">
+      <div style="flex:1"><div style="color:var(--muted);font-size:.78rem;margin-bottom:2px">Username</div>
+      <div style="font-weight:700">{user['username']}</div></div>
     </div>
-    <div style="margin-bottom:20px;padding:14px;background:var(--surf3);border-radius:8px;border:1px solid var(--border)">
-      <div style="color:var(--muted);font-size:.8rem;margin-bottom:2px">Email</div>
-      <div style="font-weight:700">{user['email']}</div>
-    </div>
-    <div class="settings-title" style="margin-top:20px">Bio</div>
+    <div class="settings-title" style="margin-top:20px">🔒 Change Password</div>
+    <form method="POST" style="margin-bottom:24px">
+      <input type="hidden" name="action" value="change_password">
+      <div class="fg"><label>Current Password</label>
+      <input type="password" name="old_password" placeholder="Enter current password" required></div>
+      <div class="fg"><label>New Password</label>
+      <input type="password" name="new_password" placeholder="Create new password" required></div>
+      <div class="fg"><label>Confirm New Password</label>
+      <input type="password" name="confirm_password" placeholder="Repeat new password" required></div>
+      <button type="submit" class="btn outline">Update Password</button>
+    </form>
+    <div class="settings-title">📧 Link Email Address</div>
+    {'<div style="margin-bottom:12px;padding:12px;background:var(--surf3);border-radius:8px;display:flex;align-items:center;gap:10px"><span>'+real_email+'</span>'+email_status+'</div>' if real_email else '<div style="color:var(--muted);font-size:.85rem;margin-bottom:12px">No email linked. Add one to recover your account and receive notifications.</div>'}
+    <form method="POST">
+      <input type="hidden" name="action" value="link_email">
+      <div class="fg"><label>Email Address</label>
+      <input type="email" name="new_email" placeholder="your@email.com" {'value="'+real_email+'"' if real_email else ''} required></div>
+      <button type="submit" class="btn">{'Update Email' if real_email else 'Link Email'}</button>
+    </form>
+    <div class="settings-title" style="margin-top:24px">Bio</div>
     <form method="POST">
       <input type="hidden" name="action" value="update_bio">
       <div class="fg"><textarea name="bio" placeholder="Tell others about yourself..." rows="3">{user.get('bio','')}</textarea></div>
@@ -1453,8 +1515,8 @@ def settings():
       <button type="submit" class="btn outline">Update Password</button>
     </form>"""
 
-    tabs_map = {"account":account_tab,"username":username_tab,"security":security_tab}
-    nav_items = [("account","👤 Account Info"),("username","✏️ Change Username"),("security","🔒 Security")]
+    tabs_map = {"account":account_tab,"username":username_tab}
+    nav_items = [("account","👤 Account & Password"),("username","✏️ Change Username")]
     nav_html = ''.join([f'<a href="/settings?tab={k}"><div class="settings-nav-item {"active" if tab==k else ""}">{label}</div></a>' for k,label in nav_items])
 
     content = f"""
@@ -1578,5 +1640,5 @@ def dl_linux():
     return redirect('https://github.com')  # placeholder
 
 if __name__ == '__main__':
-    init_db()
+    ensure_admin()
     app.run(debug=True)
