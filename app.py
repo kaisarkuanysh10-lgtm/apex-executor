@@ -144,36 +144,43 @@ def q(sql, params=(), one=False, commit=False):
 # EMAIL
 # ═══════════════════════════════════════════════════
 def send_code_email(to, username, code, purpose="verify"):
-    su = os.environ.get("SMTP_EMAIL")
-    sp = os.environ.get("SMTP_PASS")
-    subj = "Apex Studio — Verify Your Account" if purpose=="verify" else "Apex Studio — Reset Password"
-    html = f"""<!DOCTYPE html><html><body style="background:#0f0f1a;margin:0;padding:40px;font-family:Arial,sans-serif">
-<div style="max-width:520px;margin:0 auto;background:#16213e;border-radius:12px;overflow:hidden">
-  <div style="background:linear-gradient(135deg,#e74c3c,#c0392b);padding:28px;text-align:center">
-    <div style="font-size:2rem;font-weight:900;color:white;letter-spacing:.1em">APEX STUDIO</div>
-  </div>
-  <div style="padding:36px">
-    <p style="color:#e2e8f0;font-size:1rem;margin-bottom:8px">Hello, <strong style="color:white">{username}</strong>!</p>
-    <p style="color:#718096;margin-bottom:24px">{"Verify your Apex Studio account" if purpose=="verify" else "Reset your password"} using this code:</p>
-    <div style="background:#0d1117;border:2px solid #e74c3c;border-radius:10px;padding:28px;text-align:center;margin-bottom:24px">
-      <div style="font-size:3rem;font-weight:900;color:#e74c3c;letter-spacing:.6em">{code}</div>
-      <div style="color:#4a5568;font-size:.75rem;margin-top:10px;letter-spacing:.2em">EXPIRES IN 10 MINUTES</div>
-    </div>
-    <p style="color:#4a5568;font-size:.8rem">If you didn't request this, ignore this email.</p>
-  </div>
-</div></body></html>"""
-    if not su or not sp:
-        print(f"[EMAIL] {to}: {code}")
-        return True
+    import urllib.request, urllib.error
+    api_key = os.environ.get("RESEND_API_KEY", "re_dXLVFWkv_Q3Gf6F4Cniqd1MZFc4Uqhjux")
+    subj = "Apex Studio — Your Code"
+    html = f"""<div style="font-family:Arial;max-width:500px;margin:0 auto;background:#16213e;padding:32px;border-radius:12px">
+<h2 style="color:#e74c3c;text-align:center;margin-bottom:8px">APEX STUDIO</h2>
+<p style="color:#e2e8f0;margin-bottom:8px">Hello <b style="color:white">{username}</b>,</p>
+<p style="color:#718096;margin-bottom:20px">Your {"verification" if purpose=="verify" else "password reset"} code:</p>
+<div style="background:#0d1117;border:2px solid #e74c3c;padding:28px;text-align:center;border-radius:10px;margin:16px 0">
+<div style="font-size:2.8rem;font-weight:900;color:#e74c3c;letter-spacing:.5em">{code}</div>
+<div style="color:#4a5568;font-size:.75rem;margin-top:10px">EXPIRES IN 10 MINUTES</div>
+</div>
+<p style="color:#4a5568;font-size:.8rem">If you did not request this, ignore this email.</p>
+</div>"""
+    payload = json.dumps({{
+        "from": "Apex Studio <onboarding@resend.dev>",
+        "to": [to],
+        "subject": subj,
+        "html": html
+    }}).encode()
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={{"Authorization": f"Bearer {{api_key}}", "Content-Type": "application/json"}},
+        method="POST"
+    )
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subj; msg["From"] = f"Apex Studio <{su}>"; msg["To"] = to
-        msg.attach(MIMEText(html, "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-            s.login(su, sp); s.send_message(msg)
-        return True
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read())
+            print(f"[RESEND_OK] id={{result.get('id')}} to={{to}}")
+            return True
+    except urllib.error.HTTPError as e:
+        err = e.read().decode()
+        print(f"[RESEND_ERR] {{e.code}}: {{err}}")
+        return False
     except Exception as e:
-        print(f"Email error: {e}"); return False
+        print(f"[RESEND_ERR] {{e}}")
+        return False
 
 def gen_code(): return ''.join(random.choices(string.digits, k=8))
 
