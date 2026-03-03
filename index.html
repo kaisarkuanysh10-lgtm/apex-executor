@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ApexStudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0f;--bg2:#111118;--card:#16161f;--hov:#1e1e2a;--ac:#7c3aed;--al:#a855f7;--glow:rgba(124,58,237,.4);--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--bd:#1e2028}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+button{cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s}
+input{font-family:'Inter',sans-serif}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2d2d3a;border-radius:2px}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(10,10,15,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);padding:0 28px;height:60px;display:flex;align-items:center;gap:24px}
+.nav-logo{font-size:19px;font-weight:900;background:linear-gradient(135deg,#a855f7,#7c3aed,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer}
+.nav-links{display:flex;gap:20px}
+.nl{color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;padding:4px 0;border-bottom:2px solid transparent;transition:all .2s}
+.nl:hover,.nl.act{color:var(--t1);border-bottom-color:var(--ac)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn-out{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:600;background:transparent;border:1.5px solid var(--bd);color:var(--t2)}
+.btn-out:hover{border-color:var(--ac);color:var(--al)}
+.btn-sol{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:600;background:linear-gradient(135deg,var(--ac),var(--al));color:#fff;border:none;box-shadow:0 4px 14px var(--glow)}
+.btn-sol:hover{transform:translateY(-1px);box-shadow:0 6px 20px var(--glow)}
+.page{display:none;padding-top:60px;min-height:100vh}
+.page.act{display:block}
+/* HERO */
+.hero{min-height:calc(100vh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(124,58,237,.18) 0%,transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(168,85,247,.1) 0%,transparent 50%)}
+.hero-c{position:relative;z-index:1}
+.hbadge{display:inline-flex;align-items:center;gap:7px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--al);margin-bottom:22px}
+.htitle{font-size:clamp(36px,7vw,72px);font-weight:900;line-height:1.05;letter-spacing:-2px;margin-bottom:18px}
+.htitle span{background:linear-gradient(135deg,#a855f7,#7c3aed,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hsub{font-size:17px;color:var(--t2);max-width:560px;margin:0 auto 36px;line-height:1.6}
+.hbtns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hbtn{padding:13px 30px;border-radius:11px;font-size:14px;font-weight:700;border:none;transition:all .2s}
+.hbtn-p{background:linear-gradient(135deg,var(--ac),var(--al));color:#fff;box-shadow:0 8px 28px var(--glow)}
+.hbtn-p:hover{transform:translateY(-2px);box-shadow:0 12px 36px var(--glow)}
+.hbtn-s{background:var(--card);border:1.5px solid var(--bd)!important;color:var(--t1)}
+.hbtn-s:hover{border-color:var(--ac)!important}
+/* GAMES GRID */
+.gsect{padding:60px 28px;max-width:1100px;margin:0 auto}
+.stit{font-size:26px;font-weight:800;margin-bottom:6px}
+.ssub{color:var(--t2);font-size:14px;margin-bottom:32px}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.gc{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;cursor:pointer;transition:all .25s}
+.gc:hover{border-color:var(--ac);transform:translateY(-3px);box-shadow:0 12px 40px rgba(124,58,237,.18)}
+.gimg{height:150px;display:flex;align-items:center;justify-content:center;font-size:60px;background:linear-gradient(135deg,#1a1a2e,#16213e);position:relative}
+.gbadge{position:absolute;top:9px;right:9px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:2px 9px;font-size:9px;color:#22c55e;font-weight:600}
+.ginfo{padding:14px}
+.gname{font-size:14px;font-weight:700;margin-bottom:5px}
+.gmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.gpl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t3)}
+.odot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.gcr{font-size:10px;color:var(--t3)}
+.gpbtn{width:100%;padding:8px;background:linear-gradient(135deg,var(--ac),var(--al));border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:700}
+.gpbtn:hover{opacity:.9}
+/* AUTH */
+.awrap{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:40px;background:radial-gradient(ellipse at 20% 50%,rgba(124,58,237,.1) 0%,transparent 60%)}
+.acard{background:rgba(22,22,31,.98);border:1px solid var(--bd);border-radius:22px;padding:40px;width:100%;max-width:400px;box-shadow:0 25px 80px rgba(0,0,0,.5)}
+.alogo{font-size:21px;font-weight:900;background:linear-gradient(135deg,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center}
+.atag{color:var(--t3);font-size:10px;text-align:center;margin-top:3px;margin-bottom:24px}
+.ah{font-size:18px;font-weight:700;margin-bottom:4px}
+.as{color:var(--t2);font-size:12px;margin-bottom:22px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.fi{width:100%;padding:11px 13px;background:#0d0d14;border:1.5px solid var(--bd);border-radius:7px;color:var(--t1);font-size:13px;outline:none;transition:all .2s}
+.fi:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(124,58,237,.18)}
+.fi::placeholder{color:var(--t3)}
+.emsg{color:var(--red);font-size:11px;margin-top:4px}
+.smsg{color:var(--green);font-size:11px;margin-top:4px}
+.bsub{width:100%;padding:12px;background:linear-gradient(135deg,var(--ac),var(--al));border:none;border-radius:7px;color:#fff;font-size:14px;font-weight:600}
+.bsub:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px var(--glow)}
+.bsub:disabled{opacity:.5;cursor:not-allowed}
+.asw{text-align:center;margin-top:16px;font-size:12px;color:var(--t2)}
+.asw span{color:var(--al);cursor:pointer;font-weight:500}
+.asw span:hover{text-decoration:underline}
+.flnk{text-align:right;font-size:11px;color:var(--al);cursor:pointer;margin-bottom:14px}
+.flnk:hover{text-decoration:underline}
+/* FORGOT */
+.sdots{display:flex;gap:7px;justify-content:center;margin-bottom:24px}
+.sdot{width:30px;height:3px;border-radius:2px;background:var(--bd);transition:all .3s}
+.sdot.act{background:var(--ac)}
+.sdot.dn{background:var(--green)}
+.code-fi{letter-spacing:10px;font-size:24px;font-weight:700;text-align:center}
+/* DASHBOARD */
+.dash{display:flex;height:calc(100vh - 60px)}
+.dsb{width:210px;background:var(--bg2);border-right:1px solid var(--bd);padding:16px 10px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;overflow-y:auto}
+.dsu{display:flex;align-items:center;gap:9px;padding:10px;background:var(--card);border-radius:9px;margin-bottom:14px}
+.duav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.dun{font-size:12px;font-weight:600;display:flex;align-items:center;gap:3px}
+.dub{font-size:10px;color:var(--gold);font-weight:600}
+.dssc{font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:7px 10px 3px;margin-top:6px}
+.dsb-btn{width:100%;padding:8px 10px;border-radius:7px;background:transparent;border:none;color:var(--t2);font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;text-align:left}
+.dsb-btn:hover{background:var(--hov);color:var(--t1)}
+.dsb-btn.on{background:rgba(124,58,237,.14);color:var(--al)}
+.dsb-btn .ic{font-size:15px;width:18px;text-align:center}
+.dc{flex:1;overflow-y:auto;padding:20px}
+.tp{display:none}
+.tp.on{display:block}
+/* SHOP */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.sc{background:var(--card);border:1px solid var(--bd);border-radius:11px;overflow:hidden;transition:all .22s}
+.sc:hover{border-color:var(--ac);transform:translateY(-2px)}
+.sth{height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,#1a1a2e,#16213e)}
+.si{padding:9px}
+.sn{font-size:11px;font-weight:600;margin-bottom:3px}
+.sp{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:5px}
+.sb2{width:100%;padding:5px;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.28);border-radius:5px;color:var(--al);font-size:10px;font-weight:600}
+.sb2:hover{background:var(--ac);color:#fff}
+/* ADMIN TABLE */
+.atable{width:100%;border-collapse:collapse;font-size:11px}
+.atable th{text-align:left;padding:7px 10px;color:var(--t3);border-bottom:1px solid var(--bd);font-weight:500}
+.atable td{padding:7px 10px;border-bottom:1px solid rgba(30,32,40,.4)}
+.atable tr:hover td{background:var(--hov)}
+.ban-b{padding:3px 9px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28);border-radius:4px;color:var(--red);font-size:9px;cursor:pointer}
+.ban-b:hover{background:rgba(239,68,68,.28)}
+/* MODAL */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:400;padding:16px}
+.mbox{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:26px;width:100%;max-width:460px;box-shadow:0 25px 80px rgba(0,0,0,.6)}
+.mx{float:right;background:none;border:none;color:var(--t3);font-size:17px;cursor:pointer;margin-top:-3px}
+.mx:hover{color:var(--t1)}
+.mt2{font-size:17px;font-weight:700;margin-bottom:5px}
+.ms2{font-size:12px;color:var(--t2);margin-bottom:18px}
+/* TOAST */
+.toast{position:fixed;top:72px;right:16px;z-index:9999;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:11px 16px;min-width:200px;font-size:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:tin .22s ease;display:flex;align-items:center;gap:7px}
+.toast.err{border-color:var(--red);background:rgba(239,68,68,.07)}
+.toast.ok{border-color:var(--green);background:rgba(34,197,94,.07)}
+@keyframes tin{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+/* UPDATE BANNER */
+.upd-banner{position:fixed;top:60px;left:0;right:0;z-index:300;background:linear-gradient(135deg,#166534,#15803d);border-bottom:1px solid rgba(34,197,94,.3);padding:12px 28px;display:flex;align-items:center;justify-content:center;gap:14px;display:none}
+.upd-spinner{width:20px;height:20px;border-radius:50%;background:rgba(34,197,94,.4);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+/* INFO */
+.ibar{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.17);border-radius:7px;padding:9px 13px;margin-bottom:13px;font-size:11px;color:var(--t2)}
+.admin-bar{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:11px;padding:13px 16px;margin-bottom:18px;display:flex;align-items:center;gap:9px}
+@media(max-width:700px){.nav-links{display:none}.dsb{display:none}.dash{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<!-- UPDATE BANNER -->
+<div class="upd-banner" id="upd-banner">
+  <div class="upd-spinner"></div>
+  <span style="font-weight:600">New update available!</span>
+  <button onclick="doUpdate()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;padding:5px 14px;font-size:12px;cursor:pointer">Update Now</button>
+  <button onclick="document.getElementById('upd-banner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:16px;margin-left:8px">×</button>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo" onclick="goHome()">⚡ ApexStudio</div>
+  <div class="nav-links">
+    <span class="nl act" onclick="showP('home')">Home</span>
+    <span class="nl" onclick="showP('games')">Games</span>
+    <span class="nl" onclick="showP('create-pub')">Create</span>
+    <span class="nl" onclick="showP('shop-pub')">Shop</span>
+  </div>
+  <div class="nav-right" id="nav-right">
+    <button class="btn-out" onclick="showP('login')">Sign In</button>
+    <button class="btn-sol" onclick="showP('register')">Get Started</button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<!-- ══════════ HOME ══════════ -->
+<div class="page act" id="page-home">
+  <div class="hero">
+    <div class="hero-c">
+      <div class="hbadge">🚀 Open Beta</div>
+      <h1 class="htitle">Build Worlds.<br/><span>Play Together.</span></h1>
+      <p class="hsub">The ultimate platform to create, play, and share 3D games. Millions of worlds await.</p>
+      <div class="hbtns">
+        <button class="hbtn hbtn-p" onclick="showP('games')">🎮 Play Now</button>
+        <button class="hbtn hbtn-s" onclick="showP('create-pub')">🔨 Start Creating</button>
+      </div>
+    </div>
+  </div>
+  <div class="gsect">
+    <div class="stit">🔥 Featured Games</div>
+    <div class="ssub">Discover the most popular games</div>
+    <div class="ggrid" id="home-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div class="page" id="page-login">
+  <div class="awrap"><div class="acard">
+    <div class="alogo">⚡ ApexStudio</div>
+    <div class="atag">Build. Play. Dominate.</div>
+    <div class="ah">Welcome back</div>
+    <div class="as">Sign in to your account</div>
+    <div class="fg"><label class="fl">Username</label>
+      <input class="fi" id="lu" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="fg"><label class="fl">Password</label>
+      <input class="fi" id="lp" type="password" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="emsg" id="lerr" style="display:none"></div></div>
+    <div class="flnk" onclick="showP('forgot')">Forgot password?</div>
+    <button class="bsub" id="lbtn" onclick="doLogin()">Sign In</button>
+    <div class="asw">No account? <span onclick="showP('register')">Create one</span></div>
+  </div></div>
+</div>
+
+<!-- ══════════ REGISTER ══════════ -->
+<div class="page" id="page-register">
+  <div class="awrap"><div class="acard">
+    <div class="alogo">⚡ ApexStudio</div>
+    <div class="atag">Build. Play. Dominate.</div>
+    <div class="ah">Create account</div>
+    <div class="as">Join millions of creators</div>
+    <div class="fg"><label class="fl">Username</label>
+      <input class="fi" id="ru" placeholder="Choose a username"/>
+      <div class="emsg" id="rue" style="display:none"></div></div>
+    <div class="fg"><label class="fl">Email</label>
+      <input class="fi" id="re" type="email" placeholder="your@email.com"/>
+      <div class="emsg" id="ree" style="display:none"></div></div>
+    <div class="fg"><label class="fl">Password</label>
+      <input class="fi" id="rp" type="password" placeholder="Min 6 characters"/>
+      <div class="emsg" id="rpe" style="display:none"></div></div>
+    <div class="fg"><label class="fl">Confirm Password</label>
+      <input class="fi" id="rcp" type="password" placeholder="Repeat password"/>
+      <div class="emsg" id="rcpe" style="display:none"></div></div>
+    <button class="bsub" id="rbtn" onclick="doRegister()">Create Account</button>
+    <div class="asw">Have an account? <span onclick="showP('login')">Sign in</span></div>
+  </div></div>
+</div>
+
+<!-- ══════════ FORGOT PASSWORD ══════════ -->
+<div class="page" id="page-forgot">
+  <div class="awrap"><div class="acard">
+    <div class="alogo">⚡ ApexStudio</div>
+    <div class="atag">Password Recovery</div>
+    <div class="sdots">
+      <div class="sdot act" id="sd1"></div>
+      <div class="sdot" id="sd2"></div>
+      <div class="sdot" id="sd3"></div>
+    </div>
+    <!-- Step 1 -->
+    <div id="fs1">
+      <div class="ah">Forgot Password?</div>
+      <div class="as">Enter your email — we'll send a 6-digit code.</div>
+      <div class="fg"><label class="fl">Email Address</label>
+        <input class="fi" id="fe" type="email" placeholder="your@email.com"/>
+        <div class="emsg" id="fee" style="display:none"></div></div>
+      <button class="bsub" id="fsb1" onclick="forgotSend()">Send Verification Code</button>
+      <div class="asw"><span onclick="showP('login')">← Back to Login</span></div>
+    </div>
+    <!-- Step 2 -->
+    <div id="fs2" style="display:none">
+      <div class="ah">Check Your Email</div>
+      <div class="as" id="fhint">Code sent. Check inbox and spam.</div>
+      <div class="fg"><label class="fl">6-Digit Code</label>
+        <input class="fi code-fi" id="fc" placeholder="000000" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        <div class="emsg" id="fce" style="display:none"></div></div>
+      <button class="bsub" id="fsb2" onclick="forgotVerify()">Verify Code</button>
+      <div class="asw"><span onclick="fBack()">← Change email</span></div>
+    </div>
+    <!-- Step 3 -->
+    <div id="fs3" style="display:none">
+      <div class="ah">New Password</div>
+      <div class="as">Choose a strong password for your account.</div>
+      <div class="fg"><label class="fl">New Password</label>
+        <input class="fi" id="fnp" type="password" placeholder="Min 6 characters"/></div>
+      <div class="fg"><label class="fl">Confirm New Password</label>
+        <input class="fi" id="fcp2" type="password" placeholder="Repeat new password"/>
+        <div class="emsg" id="fpe" style="display:none"></div></div>
+      <button class="bsub" id="fsb3" onclick="forgotReset()">Update Password</button>
+    </div>
+    <!-- Done -->
+    <div id="fdn" style="display:none;text-align:center;padding:16px 0">
+      <div style="font-size:52px;margin-bottom:14px">✅</div>
+      <div style="font-size:19px;font-weight:700;margin-bottom:7px">Password Updated!</div>
+      <div style="color:var(--t2);font-size:12px;margin-bottom:20px">Sign in with your new password.</div>
+      <button class="bsub" onclick="showP('login')">Go to Login</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ══════════ PUBLIC GAMES ══════════ -->
+<div class="page" id="page-games">
+  <div style="padding:36px 28px;max-width:1100px;margin:0 auto">
+    <div class="stit">🎮 All Games</div>
+    <div class="ssub">Discover and play community-made games</div>
+    <div class="ggrid" id="pub-games-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ PUBLIC CREATE ══════════ -->
+<div class="page" id="page-create-pub">
+  <div style="max-width:860px;margin:0 auto;padding:60px 28px;text-align:center">
+    <div style="font-size:44px;font-weight:900;background:linear-gradient(135deg,#a855f7,#7c3aed,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">Start Creating</div>
+    <div style="font-size:16px;color:var(--t2);max-width:500px;margin:0 auto 36px">Build 3D games with ApexStudio Engine. Publish to millions.</div>
+    <button onclick="openCreateMenu()" style="background:linear-gradient(135deg,var(--ac),var(--al));border:none;border-radius:12px;padding:16px 40px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 32px var(--glow);margin-bottom:48px">🔨 Download ApexStudio Engine</button>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;text-align:left">
+      <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px"><div style="font-size:26px;margin-bottom:9px">🏗️</div><div style="font-size:14px;font-weight:700;margin-bottom:5px">Visual Builder</div><div style="font-size:12px;color:var(--t2)">Drag-and-drop 3D objects. No coding required.</div></div>
+      <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px"><div style="font-size:26px;margin-bottom:9px">🌐</div><div style="font-size:14px;font-weight:700;margin-bottom:5px">Instant Publish</div><div style="font-size:12px;color:var(--t2)">One click to publish to millions of players.</div></div>
+      <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px"><div style="font-size:26px;margin-bottom:9px">💰</div><div style="font-size:14px;font-weight:700;margin-bottom:5px">Earn Bobux</div><div style="font-size:12px;color:var(--t2)">Sell items and passes. Keep 70% of revenue.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PUBLIC SHOP ══════════ -->
+<div class="page" id="page-shop-pub">
+  <div style="max-width:1050px;margin:0 auto;padding:36px 28px">
+    <div class="stit">🛍️ Marketplace</div>
+    <div class="ssub">Buy skins and accessories with Bobux</div>
+    <div class="sgrid" id="pub-shop-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div class="page" id="page-dashboard">
+  <div class="dash">
+    <div class="dsb">
+      <div class="dsu">
+        <div class="duav" id="dav"></div>
+        <div>
+          <div class="dun" id="dun"></div>
+          <div class="dub" id="dub"></div>
+        </div>
+      </div>
+      <div class="dssc">Main</div>
+      <button class="dsb-btn on" id="t-home" onclick="sw('home')"><span class="ic">🏠</span>Home</button>
+      <button class="dsb-btn" id="t-games" onclick="sw('games')"><span class="ic">🎮</span>Games</button>
+      <button class="dsb-btn" id="t-shop" onclick="sw('shop')"><span class="ic">🛍️</span>Shop</button>
+      <div class="dssc">Creator</div>
+      <button class="dsb-btn" id="t-create" onclick="sw('create')"><span class="ic">🔨</span>Create</button>
+      <button class="dsb-btn" id="t-studio" onclick="sw('studio')"><span class="ic">🏗️</span>Studio</button>
+      <div class="dssc">Account</div>
+      <button class="dsb-btn" id="t-profile" onclick="sw('profile')"><span class="ic">👤</span>Profile</button>
+      <button class="dsb-btn" id="t-admin" style="display:none" onclick="sw('admin')"><span class="ic">⚙️</span>Admin</button>
+      <div style="flex:1"></div>
+      <button class="dsb-btn" onclick="doLogout()" style="color:var(--red)"><span class="ic">🚪</span>Sign Out</button>
+    </div>
+    <div class="dc">
+      <!-- HOME -->
+      <div class="tp on" id="tp-home">
+        <div id="adm-bar" style="display:none" class="admin-bar">
+          <span style="font-size:20px">👑</span>
+          <div><div style="font-weight:700;color:var(--gold)">Super Admin — apexstudio</div>
+          <div style="font-size:11px;color:var(--t2)">Infinite Bobux · Full access</div></div>
+        </div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:16px">🎮 Featured Games</div>
+        <div id="dg-grid" class="ggrid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div>
+      </div>
+      <!-- GAMES -->
+      <div class="tp" id="tp-games">
+        <div style="font-size:20px;font-weight:800;margin-bottom:16px">🎮 All Games</div>
+        <div id="dg-grid2" class="ggrid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div>
+      </div>
+      <!-- SHOP -->
+      <div class="tp" id="tp-shop">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:20px;font-weight:800">🛍️ Marketplace</div>
+          <button class="bsub" style="width:auto;padding:8px 16px;font-size:12px" onclick="openItemCreate()">+ Create Item</button>
+        </div>
+        <div class="ibar">💡 Create for <strong style="color:var(--gold)">10 Bobux</strong>. Platform takes <strong style="color:var(--red)">30% tax</strong>. You keep 70%.</div>
+        <div id="d-shop-grid" class="sgrid"></div>
+      </div>
+      <!-- CREATE -->
+      <div class="tp" id="tp-create">
+        <div style="text-align:center;padding:20px 0 36px">
+          <div style="font-size:40px;font-weight:900;background:linear-gradient(135deg,#a855f7,#7c3aed,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px">Create Your Game</div>
+          <div style="font-size:14px;color:var(--t2);max-width:460px;margin:0 auto 26px">Build worlds with ApexStudio Engine. Publish to millions.</div>
+          <button onclick="openCreateMenu()" style="background:linear-gradient(135deg,var(--ac),var(--al));border:none;border-radius:11px;padding:14px 32px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px var(--glow)">🔨 Create a Game</button>
+        </div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:12px">My Games</div>
+        <div id="my-games" class="ggrid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div>
+      </div>
+      <!-- STUDIO -->
+      <div class="tp" id="tp-studio">
+        <div style="text-align:center;padding:16px">
+          <div style="font-size:32px;font-weight:900;background:linear-gradient(135deg,#a855f7,#7c3aed,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px">ApexStudio Engine</div>
+          <div style="font-size:14px;color:var(--t2);max-width:460px;margin:0 auto 24px">Download for Windows or Linux. Build locally, publish globally.</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:28px">
+            <button onclick="dlStudio('win')" style="background:linear-gradient(135deg,var(--ac),var(--al));border:none;border-radius:9px;padding:12px 24px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🪟 Windows EXE</button>
+            <button onclick="dlStudio('linux')" style="background:var(--card);border:1.5px solid var(--bd);border-radius:9px;padding:12px 24px;color:var(--t1);font-size:13px;font-weight:600;cursor:pointer">🐧 Linux (Arch)</button>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;text-align:left;max-width:560px;margin:0 auto">
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px">🐧 Arch Linux — Install Visual Studio Code</div>
+            <pre style="background:#0d0d14;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:11px;color:#a5f3fc;overflow-x:auto"># Method 1: AUR (recommended)
+yay -S visual-studio-code-bin
+
+# Method 2: Snap
+sudo pacman -S snapd
+sudo systemctl enable --now snapd.socket
+sudo snap install code --classic
+
+# Method 3: Flatpak
+sudo pacman -S flatpak
+flatpak install flathub com.visualstudio.code
+
+# Update anytime
+yay -Su visual-studio-code-bin</pre>
+          </div>
+        </div>
+      </div>
+      <!-- PROFILE -->
+      <div class="tp" id="tp-profile">
+        <div style="height:120px;background:linear-gradient(135deg,#1a0533,#0a0f2e,#051525);border-radius:12px;position:relative;margin-bottom:48px">
+          <div id="pav" style="position:absolute;bottom:-40px;left:18px;width:80px;height:80px;border-radius:50%;border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700"></div>
+        </div>
+        <div id="pun" style="font-size:20px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:7px"></div>
+        <div style="display:flex;gap:18px;margin-bottom:10px">
+          <div><div id="pfl" style="font-size:16px;font-weight:700">0</div><div style="font-size:10px;color:var(--t3)">Followers</div></div>
+          <div><div id="pbx" style="font-size:16px;font-weight:700;color:var(--gold)">0</div><div style="font-size:10px;color:var(--t3)">Bobux</div></div>
+          <div><div id="pkl" style="font-size:16px;font-weight:700;color:var(--red)">0</div><div style="font-size:10px;color:var(--t3)">Kills</div></div>
+        </div>
+        <div id="prl" style="color:var(--t2);font-size:12px"></div>
+      </div>
+      <!-- ADMIN -->
+      <div class="tp" id="tp-admin">
+        <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:11px;padding:18px">
+          <div style="color:var(--gold);font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px">👑 Admin Panel — Registered Users</div>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:12px" id="auc"></div>
+          <div style="overflow-x:auto">
+            <table class="atable">
+              <thead><tr><th>Username</th><th>Email</th><th>Bobux</th><th>Status</th><th>Joined</th><th>Action</th></tr></thead>
+              <tbody id="atb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+<!-- Create Menu Modal -->
+<div class="mov" id="cm-modal" style="display:none" onclick="if(event.target===this)closeM('cm-modal')">
+  <div class="mbox">
+    <button class="mx" onclick="closeM('cm-modal')">×</button>
+    <div class="mt2">🔨 Download ApexStudio Engine</div>
+    <div class="ms2">Build games locally, publish to the platform.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="dlStudio('win')" style="padding:13px 16px;background:linear-gradient(135deg,var(--ac),var(--al));border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:9px;text-align:left">
+        🪟 Windows (.exe) <span style="margin-left:auto;font-size:10px;opacity:.6">Win 7 / 10 / 11</span>
+      </button>
+      <button onclick="dlStudio('linux')" style="padding:13px 16px;background:var(--hov);border:1.5px solid var(--bd);border-radius:9px;color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:9px">
+        🐧 Linux AppImage <span style="margin-left:auto;font-size:10px;color:var(--t3)">Arch / Ubuntu</span>
+      </button>
+      <div style="background:var(--hov);border-radius:7px;padding:12px;font-size:11px;color:var(--t2)">
+        <strong style="color:var(--t1)">How it works:</strong><br/>
+        1. Download & install ApexStudio Engine<br/>
+        2. Sign in with your ApexStudio account<br/>
+        3. Build your world using the visual editor<br/>
+        4. Click Publish → goes live instantly!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Item Modal -->
+<div class="mov" id="ci-modal" style="display:none" onclick="if(event.target===this)closeM('ci-modal')">
+  <div class="mbox">
+    <button class="mx" onclick="closeM('ci-modal')">×</button>
+    <div class="mt2">Create Marketplace Item</div>
+    <div class="ms2">List your item for the community</div>
+    <div style="display:flex;justify-content:space-between;background:#0d0d14;border:1px solid var(--bd);border-radius:7px;padding:9px 13px;margin-bottom:12px">
+      <span style="font-size:12px;color:var(--t2)">Creation Fee</span><span style="font-size:13px;font-weight:700;color:var(--gold)">⚡ 10 Bobux</span>
+    </div>
+    <div class="fg"><label class="fl">Item Name</label><input class="fi" id="in" placeholder="e.g. Neon Jacket"/></div>
+    <div class="fg">
+      <label class="fl">Price (Bobux)</label>
+      <input class="fi" id="ip" type="number" min="1" max="9999" value="10" oninput="updateEarn()"/>
+      <div style="font-size:10px;color:var(--t3);margin-top:3px" id="ep">You earn: ⚡ 7B per sale</div>
+    </div>
+    <div class="fg"><label class="fl">Icon</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px" id="epick"></div>
+    </div>
+    <button class="bsub" onclick="submitItem()">Create & List (10 Bobux)</button>
+  </div>
+</div>
+
+<!-- Game Modal -->
+<div class="mov" id="gm-modal" style="display:none" onclick="if(event.target===this)closeM('gm-modal')">
+  <div class="mbox" style="max-width:500px">
+    <button class="mx" onclick="closeM('gm-modal')">×</button>
+    <div id="gm-img" style="height:170px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:68px;background:linear-gradient(135deg,#1a1a2e,#16213e);margin-bottom:14px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px">
+      <div><div id="gm-name" style="font-size:19px;font-weight:800;margin-bottom:3px"></div>
+      <div id="gm-cr" style="font-size:11px;color:var(--t2)"></div></div>
+      <div style="text-align:right"><div id="gm-pl" style="font-size:12px;color:var(--green);font-weight:600"></div>
+      <div style="font-size:10px;color:var(--t3)">playing now</div></div>
+    </div>
+    <div id="gm-desc" style="font-size:12px;color:var(--t2);margin-bottom:18px;line-height:1.6"></div>
+    <button id="gm-play" onclick="launchGame()" style="width:100%;padding:13px;background:linear-gradient(135deg,#15803d,#22c55e);border:none;border-radius:9px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">▶ Play Now</button>
+  </div>
+</div>
+
+<script>
+// ═══════════ STATE ═════════════════════════════════════════
+let CU = null; // current user
+let selEmoji = '👕';
+let fCode = ''; // forgot code
+let fEmail = '';
+let curGame = null;
+
+const GAMES_DATA = [
+  {id:1,name:'Neon Racers',emoji:'🏎️',players:1423,creator:'apexstudio',desc:'High-speed racing through neon-lit cities. Drift, boost, and dominate.',genre:'Racing'},
+  {id:2,name:'Zombie Survival',emoji:'🧟',players:892,creator:'apexstudio',desc:'Survive endless zombie waves with friends. Build bases, craft weapons.',genre:'Survival'},
+  {id:3,name:'Sky Battle',emoji:'✈️',players:567,creator:'apexstudio',desc:'Aerial dogfights in the clouds. Missiles, tricks, epic battles.',genre:'Action'},
+  {id:4,name:'Lava Escape',emoji:'🌋',players:1105,creator:'apexstudio',desc:'Platform to the top before the lava catches you!',genre:'Platformer'},
+  {id:5,name:'Treasure Hunt',emoji:'🗺️',players:234,creator:'apexstudio',desc:'Explore vast worlds for hidden treasure and ancient artifacts.',genre:'Adventure'},
+];
+const ITEMS_DATA = [
+  {id:1,name:'Neon Jacket',emoji:'🧥',price:15,creator:'apexstudio'},
+  {id:2,name:'Galaxy Cap',emoji:'🧢',price:7,creator:'apexstudio'},
+  {id:3,name:'Storm Shoes',emoji:'👟',price:10,creator:'apexstudio'},
+  {id:4,name:'Void Glasses',emoji:'🕶️',price:20,creator:'apexstudio'},
+];
+const EMOJIS = ['👕','👖','🧢','👟','🕶️','🎩','👗','🧥','👔','🎒','🧤','🪖'];
+
+// ═══════════ LOCAL STORAGE ══════════════════════════════════
+const DB_KEY = 'apex_db';
+const SESS_KEY = 'apex_session';
+const MKT_KEY = 'apex_market';
+const RST_KEY = 'apex_resets';
+
+function getDB() { try{return JSON.parse(localStorage.getItem(DB_KEY))||{};}catch(e){return {};} }
+function setDB(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); }
+function getMkt() { try{return JSON.parse(localStorage.getItem(MKT_KEY))||[];}catch(e){return [];} }
+function setMkt(m) { localStorage.setItem(MKT_KEY, JSON.stringify(m)); }
+function getRsts() { try{return JSON.parse(localStorage.getItem(RST_KEY))||{};}catch(e){return {};} }
+function setRsts(r) { localStorage.setItem(RST_KEY, JSON.stringify(r)); }
+
+// Seed admin
+(function(){
+  const db = getDB();
+  if (!db['apexstudio']) {
+    db['apexstudio'] = {
+      username:'apexstudio',email:'admin@apexstudio.gg',
+      pw:btoa('apexstudio_key4014VIP148643'),
+      bobux:999999999,badge:true,followers:1000000,
+      banned:false,avatar:'#f59e0b',kills:0,skin:'default',
+      createdAt:Date.now()
+    };
+    setDB(db);
+  }
+})();
+
+// ═══════════ UI HELPERS ════════════════════════════════════
+function showP(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.nl').forEach(l=>l.classList.remove('act'));
+  const p = document.getElementById('page-'+id);
+  if (p) p.classList.add('act');
+  renderPublic();
+}
+function goHome() { showP('home'); }
+function closeM(id) { document.getElementById(id).style.display='none'; }
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.className='toast '+type;
+  t.innerHTML=(type==='ok'?'✅':'⚠️')+' '+msg;
+  t.style.display='flex';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',3200);
+}
+function showE(el,msg){el.textContent=msg;el.style.display='block';}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function hashPw(pw){let h=0;for(let i=0;i<pw.length;i++){h=((h<<5)-h)+pw.charCodeAt(i);h|=0;}return h.toString(36);}
+
+// ═══════════ RENDER PUBLIC ════════════════════════════════
+function renderPublic(){
+  ['home-grid','pub-games-grid'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML=GAMES_DATA.map(g=>`
+      <div class="gc" onclick="openGameModal(${g.id})">
+        <div class="gimg">${g.emoji}<div class="gbadge">● LIVE</div></div>
+        <div class="ginfo">
+          <div class="gname">${g.name}</div>
+          <div class="gmeta"><div class="gpl"><div class="odot"></div>${g.players.toLocaleString()}</div><div class="gcr">by ${g.creator}</div></div>
+          <button class="gpbtn">▶ Play Now</button>
+        </div>
+      </div>`).join('');
+  });
+  const sg=document.getElementById('pub-shop-grid');
+  if(sg) sg.innerHTML=[...ITEMS_DATA,...getMkt()].map(it=>`
+    <div class="sc"><div class="sth">${it.emoji}</div>
+    <div class="si"><div class="sn">${it.name}</div><div class="sp">⚡ ${it.price}B</div>
+    <button class="sb2" onclick="buyItem(${it.id},'${it.name}',${it.price})">Buy Now</button></div></div>`).join('');
+}
+
+function openGameModal(id){
+  curGame=GAMES_DATA.find(g=>g.id===id);
+  if(!curGame)return;
+  document.getElementById('gm-img').innerHTML=`<span style="font-size:68px">${curGame.emoji}</span>`;
+  document.getElementById('gm-name').textContent=curGame.name;
+  document.getElementById('gm-cr').textContent=`by ${curGame.creator} · ${curGame.genre}`;
+  document.getElementById('gm-pl').textContent=`${curGame.players.toLocaleString()} online`;
+  document.getElementById('gm-desc').textContent=curGame.desc;
+  document.getElementById('gm-modal').style.display='flex';
+}
+function launchGame(){
+  closeM('gm-modal');
+  if(!CU){toast('Sign in to play!','err');showP('login');return;}
+  window.location.href='game.html?id='+(curGame?.id||1)+'&user='+encodeURIComponent(CU.username);
+}
+function buyItem(id,name,price){
+  if(!CU){toast('Sign in to buy!','err');showP('login');return;}
+  if(CU.bobux<price&&CU.bobux!==999999999){toast('Not enough Bobux!','err');return;}
+  if(CU.bobux!==999999999)CU.bobux-=price;
+  saveSession();
+  updateNavUser();
+  toast('Bought '+name+'!','ok');
+}
+
+// ═══════════ AUTH ═════════════════════════════════════════
+function saveSession(){
+  localStorage.setItem(SESS_KEY,JSON.stringify(CU));
+  const db=getDB();
+  if(db[CU.username.toLowerCase()]){
+    db[CU.username.toLowerCase()].bobux=CU.bobux;
+    db[CU.username.toLowerCase()].kills=CU.kills||0;
+    setDB(db);
+  }
+}
+function loadSession(){
+  try{return JSON.parse(localStorage.getItem(SESS_KEY));}catch(e){return null;}
+}
+
+async function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  const err=document.getElementById('lerr');
+  err.style.display='none';
+  if(!u||!p){showE(err,'⚠ Fill in all fields');return;}
+  const btn=document.getElementById('lbtn');
+  btn.disabled=true;btn.textContent='Signing in...';
+  await delay(380);
+  const db=getDB();
+  const user=db[u.toLowerCase()];
+  if(!user||hashPw(p)!==user.pw&&btoa(p)!==user.pw&&p!==atob(user.pw||'')){
+    // Also try direct match for admin
+    const match=user&&(atob(user.pw||''||p)===p||user.pw===btoa(p));
+    if(!match){showE(err,'⚠ Invalid username or password');btn.disabled=false;btn.textContent='Sign In';return;}
+  }
+  if(user.banned){showE(err,'⚠ This account has been permanently banned.');btn.disabled=false;btn.textContent='Sign In';return;}
+  CU={...user};
+  saveSession();
+  btn.disabled=false;btn.textContent='Sign In';
+  initDash();
+  showP('dashboard');
+  toast('Welcome back, '+CU.username+'!','ok');
+  checkUpdate();
+}
+
+async function doRegister(){
+  const u=document.getElementById('ru').value.trim();
+  const e=document.getElementById('re').value.trim();
+  const p=document.getElementById('rp').value;
+  const cp=document.getElementById('rcp').value;
+  ['rue','ree','rpe','rcpe'].forEach(id=>{document.getElementById(id).style.display='none';});
+  let ok=true;
+  if(u.length<3){showE(document.getElementById('rue'),'⚠ Min 3 characters');ok=false;}
+  const db=getDB();
+  if(ok&&db[u.toLowerCase()]){showE(document.getElementById('rue'),'⚠ Username taken');ok=false;}
+  if(!e.includes('@')){showE(document.getElementById('ree'),'⚠ Valid email required');ok=false;}
+  if(p.length<6){showE(document.getElementById('rpe'),'⚠ Min 6 characters');ok=false;}
+  if(p!==cp){showE(document.getElementById('rcpe'),'⚠ Passwords do not match');ok=false;}
+  if(!ok)return;
+  const btn=document.getElementById('rbtn');
+  btn.disabled=true;btn.textContent='Creating...';
+  await delay(420);
+  const colors=['#7c3aed','#3b82f6','#22c55e','#ef4444','#06b6d4'];
+  const nu={
+    username:u,email:e,pw:btoa(p),
+    bobux:100,badge:false,followers:0,banned:false,
+    avatar:colors[Math.floor(Math.random()*colors.length)],
+    kills:0,skin:'default',createdAt:Date.now()
+  };
+  db[u.toLowerCase()]=nu;setDB(db);
+  CU={...nu};saveSession();
+  btn.disabled=false;btn.textContent='Create Account';
+  initDash();showP('dashboard');
+  toast('Account created! Welcome, '+u+'!','ok');
+}
+
+function doLogout(){
+  CU=null;localStorage.removeItem(SESS_KEY);
+  updateNavGuest();showP('home');
+  toast('Signed out.','ok');
+}
+
+// ═══════════ FORGOT PASSWORD ══════════════════════════════
+async function forgotSend(){
+  const email=document.getElementById('fe').value.trim();
+  const err=document.getElementById('fee');
+  err.style.display='none';
+  if(!email.includes('@')){showE(err,'⚠ Enter a valid email');return;}
+  const btn=document.getElementById('fsb1');
+  btn.disabled=true;btn.textContent='Sending...';
+  await delay(600);
+  const db=getDB();
+  const user=Object.values(db).find(u=>u.email===email);
+  const code=(Math.floor(100000+Math.random()*900000)).toString();
+  if(user){
+    fCode=code;fEmail=email;
+    const rsts=getRsts();
+    rsts[code]={username:user.username,expires:Date.now()+10*60*1000};
+    setRsts(rsts);
+    // In production: API call to send real email
+    // For demo: show code in hint
+    document.getElementById('fhint').innerHTML=
+      `Code sent to <strong>${email}</strong>.<br/><span style="color:var(--gold);font-size:11px">📧 Demo mode — your code is: <strong>${code}</strong></span><br/><span style="font-size:10px;color:var(--t3)">In production, the code is sent to your real email via Gmail.</span>`;
+  } else {
+    document.getElementById('fhint').textContent=`If ${email} is registered, a code has been sent.`;
+  }
+  document.getElementById('fs1').style.display='none';
+  document.getElementById('fs2').style.display='block';
+  document.getElementById('sd1').className='sdot dn';
+  document.getElementById('sd2').className='sdot act';
+  btn.disabled=false;btn.textContent='Send Verification Code';
+}
+
+async function forgotVerify(){
+  const code=document.getElementById('fc').value.trim();
+  const err=document.getElementById('fce');
+  err.style.display='none';
+  if(!code){showE(err,'⚠ Enter the code');return;}
+  const btn=document.getElementById('fsb2');
+  btn.disabled=true;btn.textContent='Verifying...';
+  await delay(300);
+  const rsts=getRsts();
+  const rst=rsts[code];
+  if(!rst||Date.now()>rst.expires){
+    showE(err,'⚠ Invalid or expired code');
+    btn.disabled=false;btn.textContent='Verify Code';return;
+  }
+  fCode=code;
+  document.getElementById('fs2').style.display='none';
+  document.getElementById('fs3').style.display='block';
+  document.getElementById('sd2').className='sdot dn';
+  document.getElementById('sd3').className='sdot act';
+  btn.disabled=false;btn.textContent='Verify Code';
+}
+
+async function forgotReset(){
+  const np=document.getElementById('fnp').value;
+  const cp=document.getElementById('fcp2').value;
+  const err=document.getElementById('fpe');
+  err.style.display='none';
+  if(np.length<6){showE(err,'⚠ Min 6 characters');return;}
+  if(np!==cp){showE(err,'⚠ Passwords do not match');return;}
+  const btn=document.getElementById('fsb3');
+  btn.disabled=true;btn.textContent='Updating...';
+  await delay(400);
+  const rsts=getRsts();
+  const rst=rsts[fCode];
+  if(!rst){showE(err,'⚠ Session expired. Start over.');btn.disabled=false;btn.textContent='Update Password';return;}
+  const db=getDB();
+  const user=db[rst.username.toLowerCase()];
+  if(user){user.pw=btoa(np);setDB(db);}
+  delete rsts[fCode];setRsts(rsts);
+  document.getElementById('fs3').style.display='none';
+  document.getElementById('fdn').style.display='block';
+  document.getElementById('sd3').className='sdot dn';
+  toast('Password updated!','ok');
+  btn.disabled=false;btn.textContent='Update Password';
+}
+
+function fBack(){
+  document.getElementById('fs2').style.display='none';
+  document.getElementById('fs1').style.display='block';
+  document.getElementById('sd2').className='sdot';
+  document.getElementById('sd1').className='sdot act';
+}
+
+// ═══════════ DASHBOARD ════════════════════════════════════
+function initDash(){
+  if(!CU)return;
+  const isAdmin=CU.username==='apexstudio';
+  updateNavUser();
+  // Sidebar
+  document.getElementById('dav').style.cssText=`background:${CU.avatar};color:#fff`;
+  document.getElementById('dav').textContent=CU.username[0].toUpperCase();
+  document.getElementById('dun').innerHTML=CU.username+(isAdmin?` <span style="color:#f59e0b;font-size:10px">✓</span>`:'');
+  document.getElementById('dub').textContent='⚡ '+(CU.bobux===999999999?'∞':CU.bobux.toLocaleString())+' Bobux';
+  // Admin
+  if(isAdmin){
+    document.getElementById('adm-bar').style.display='flex';
+    document.getElementById('t-admin').style.display='flex';
+    loadAdminPanel();
+  }
+  // Profile
+  document.getElementById('pav').style.cssText=`background:${CU.avatar};color:#fff`;
+  document.getElementById('pav').textContent=CU.username[0].toUpperCase();
+  document.getElementById('pun').innerHTML=CU.username+(isAdmin?` <span style="color:#f59e0b;font-size:17px">✓</span>`:'');
+  document.getElementById('pfl').textContent=CU.followers?.toLocaleString()||'0';
+  document.getElementById('pbx').textContent=CU.bobux===999999999?'∞':CU.bobux?.toLocaleString()||'0';
+  document.getElementById('pkl').textContent=CU.kills||'0';
+  document.getElementById('prl').textContent=isAdmin?'👑 Platform Administrator':'🎮 ApexStudio Player';
+  // Grids
+  renderDashGames();
+  renderDashShop();
+  renderMyGames();
+}
+
+function updateNavUser(){
+  if(!CU)return;
+  const isAdmin=CU.username==='apexstudio';
+  document.getElementById('nav-right').innerHTML=`
+    <div onclick="showP('dashboard')" style="display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:5px 11px;cursor:pointer">
+      <div style="width:26px;height:26px;border-radius:50%;background:${CU.avatar};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${CU.username[0].toUpperCase()}</div>
+      <span style="font-size:12px;font-weight:600">${CU.username}</span>
+      ${isAdmin?'<span style="color:#f59e0b;font-size:11px">✓</span>':''}
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:5px 11px">
+      <span style="font-size:13px">⚡</span>
+      <span style="font-size:12px;font-weight:700;color:var(--gold)">${CU.bobux===999999999?'∞':CU.bobux.toLocaleString()}</span>
+    </div>
+    <button class="btn-out" onclick="doLogout()">Sign Out</button>`;
+}
+function updateNavGuest(){
+  document.getElementById('nav-right').innerHTML=`
+    <button class="btn-out" onclick="showP('login')">Sign In</button>
+    <button class="btn-sol" onclick="showP('register')">Get Started</button>`;
+}
+
+function sw(name){
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.dsb-btn').forEach(b=>b.classList.remove('on'));
+  const p=document.getElementById('tp-'+name);
+  const b=document.getElementById('t-'+name);
+  if(p)p.classList.add('on');
+  if(b)b.classList.add('on');
+  if(name==='admin')loadAdminPanel();
+}
+
+function renderDashGames(){
+  ['dg-grid','dg-grid2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML=GAMES_DATA.map(g=>`
+      <div class="gc" onclick="openGameModal(${g.id})">
+        <div class="gimg" style="height:100px;font-size:44px">${g.emoji}<div class="gbadge">LIVE</div></div>
+        <div class="ginfo"><div class="gname" style="font-size:13px">${g.name}</div>
+        <div class="gmeta"><div class="gpl"><div class="odot"></div>${g.players.toLocaleString()}</div></div>
+        <button class="gpbtn" style="font-size:11px">▶ Play</button></div>
+      </div>`).join('')+`
+      <div class="gc" onclick="sw('create')" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--t3);min-height:140px">
+        <span style="font-size:28px">＋</span><span style="font-size:11px">Create</span>
+      </div>`;
+  });
+}
+
+function renderDashShop(){
+  const el=document.getElementById('d-shop-grid');
+  if(!el)return;
+  const all=[...ITEMS_DATA,...getMkt()];
+  el.innerHTML=all.map(it=>`
+    <div class="sc"><div class="sth">${it.emoji}</div>
+    <div class="si"><div class="sn">${it.name}</div>
+    <div style="font-size:9px;color:var(--t3);margin-bottom:4px">by ${it.creator}</div>
+    <div class="sp">⚡ ${it.price}B</div>
+    <div style="font-size:9px;color:var(--green);margin-bottom:5px">Creator: ${it.price-Math.floor(it.price*.3)}B</div>
+    <button class="sb2" onclick="buyItem(${it.id},'${it.name}',${it.price})">Buy</button></div></div>`).join('');
+}
+
+function renderMyGames(){
+  const el=document.getElementById('my-games');
+  if(!el||!CU)return;
+  const mine=GAMES_DATA.filter(g=>g.creator===CU.username);
+  if(!mine.length){el.innerHTML='<div style="color:var(--t3);font-size:12px;padding:16px 0">No games yet. Create your first!</div>';return;}
+  el.innerHTML=mine.map(g=>`
+    <div class="gc"><div class="gimg" style="height:100px;font-size:44px">${g.emoji}</div>
+    <div class="ginfo"><div class="gname" style="font-size:13px">${g.name}</div>
+    <div class="gmeta"><div class="gpl"><div class="odot"></div>${g.players.toLocaleString()}</div></div>
+    <button class="gpbtn" style="font-size:11px" onclick="openGameModal(${g.id})">▶ Play</button></div></div>`).join('');
+}
+
+function loadAdminPanel(){
+  const db=getDB();
+  const list=Object.values(db);
+  const el=document.getElementById('atb');
+  const uc=document.getElementById('auc');
+  if(!el)return;
+  if(uc)uc.textContent=`Total registered users: ${list.length}`;
+  el.innerHTML=list.map(u=>`
+    <tr>
+      <td><strong>${u.username}</strong>${u.badge?` <span style="color:#f59e0b;font-size:10px">✓</span>`:''}</td>
+      <td style="color:var(--t2)">${u.email}</td>
+      <td style="color:var(--gold)">${u.bobux===999999999?'∞':u.bobux}</td>
+      <td>${u.banned?`<span style="color:var(--red);font-size:10px;font-weight:600">BANNED</span>`:`<span style="color:var(--green);font-size:10px;font-weight:600">Active</span>`}</td>
+      <td style="color:var(--t3)">${u.createdAt?new Date(u.createdAt).toLocaleDateString():'—'}</td>
+      <td>${u.username!=='apexstudio'&&!u.banned?`<button class="ban-b" onclick="banUser('${u.username}')">Ban</button>`:'—'}</td>
+    </tr>`).join('');
+}
+
+function banUser(username){
+  if(!confirm(`Ban "${username}"?`))return;
+  const db=getDB();
+  if(db[username.toLowerCase()]){db[username.toLowerCase()].banned=true;setDB(db);}
+  loadAdminPanel();
+  toast(username+' banned.','ok');
+}
+
+// ═══════════ CREATE ITEM ══════════════════════════════════
+function openCreateMenu(){
+  document.getElementById('cm-modal').style.display='flex';
+}
+function openItemCreate(){
+  if(!CU){toast('Sign in first!','err');return;}
+  selEmoji='👕';
+  document.getElementById('epick').innerHTML=EMOJIS.map(e=>
+    `<button onclick="selEm('${e}',this)" style="width:34px;height:34px;background:${e==='👕'?'rgba(124,58,237,.28)':'#0d0d14'};border:1.5px solid ${e==='👕'?'var(--ac)':'var(--bd)'};border-radius:6px;font-size:16px;cursor:pointer">${e}</button>`
+  ).join('');
+  updateEarn();
+  document.getElementById('ci-modal').style.display='flex';
+}
+function selEm(e,btn){
+  selEmoji=e;
+  document.querySelectorAll('#epick button').forEach(b=>{b.style.background='#0d0d14';b.style.borderColor='var(--bd)';});
+  btn.style.background='rgba(124,58,237,.28)';btn.style.borderColor='var(--ac)';
+}
+function updateEarn(){
+  const p=parseInt(document.getElementById('ip')?.value)||0;
+  const earn=p-Math.floor(p*.3);
+  const el=document.getElementById('ep');
+  if(el)el.textContent=`You earn: ⚡ ${earn}B per sale (after 30% tax)`;
+}
+function submitItem(){
+  if(!CU)return;
+  const name=document.getElementById('in').value.trim();
+  const price=parseInt(document.getElementById('ip').value)||1;
+  if(!name){toast('Item needs a name!','err');return;}
+  if(CU.bobux<10&&CU.bobux!==999999999){toast('Need 10 Bobux!','err');return;}
+  const mkt=getMkt();
+  mkt.push({id:Date.now(),name,emoji:selEmoji,price,creator:CU.username});
+  setMkt(mkt);
+  if(CU.bobux!==999999999)CU.bobux-=10;
+  saveSession();updateNavUser();
+  document.getElementById('dub').textContent='⚡ '+(CU.bobux===999999999?'∞':CU.bobux.toLocaleString())+' Bobux';
+  closeM('ci-modal');
+  renderDashShop();
+  toast('"'+name+'" listed!','ok');
+}
+
+// ═══════════ STUDIO DOWNLOAD ══════════════════════════════
+function dlStudio(p){
+  if(p==='win'){
+    const bat=`@echo off
+title ApexStudio Engine Launcher
+color 0A
+echo ===========================================
+echo        ApexStudio Engine v1.0
+echo        Build. Play. Dominate.
+echo ===========================================
+echo.
+echo [INFO] Checking system requirements...
+node --version >nul 2>&1
+if %errorlevel% neq 0 (
+  echo [ERROR] Node.js not found.
+  echo [INFO] Download from: https://nodejs.org
+  echo.
+  pause
+  exit /b 1
+)
+echo [OK] Node.js found.
+echo [INFO] Launching ApexStudio...
+start "" "https://apex-executor.vercel.app"
+echo.
+echo [OK] ApexStudio opened!
+echo [INFO] For full offline studio, check website for update.
+echo.
+pause`;
+    dl('ApexStudio-Launcher.bat',bat);
+    toast('Windows launcher downloaded!','ok');
+    closeM('cm-modal');
+  } else {
+    const sh=`#!/bin/bash
+# ApexStudio Engine — Arch Linux
+set -e
+echo "Installing ApexStudio Engine..."
+sudo pacman -Syu --noconfirm
+sudo pacman -S --noconfirm nodejs npm git base-devel
+npm install -g electron
+mkdir -p ~/.apexstudio
+echo '{"name":"apexstudio","version":"1.0.0","main":"main.js"}' > ~/.apexstudio/package.json
+mkdir -p ~/.local/share/applications
+cat > ~/.local/share/applications/apexstudio.desktop << 'EOF'
+[Desktop Entry]
+Name=ApexStudio
+Exec=electron ~/.apexstudio
+Type=Application
+Categories=Game;Development;
+EOF
+echo "Done! Run: electron ~/.apexstudio"`;
+    dl('install-apexstudio-arch.sh',sh);
+    toast('Linux installer downloaded!','ok');
+    closeM('cm-modal');
+  }
+}
+function dl(name,content){
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([content],{type:'text/plain'})),download:name});
+  a.click();
+}
+
+// ═══════════ UPDATE BANNER ════════════════════════════════
+function checkUpdate(){
+  const lastVer=localStorage.getItem('apex_ver')||'1.0.0';
+  const curVer='1.1.0'; // bump this to show update banner
+  if(lastVer!==curVer){
+    document.getElementById('upd-banner').style.display='flex';
+  }
+}
+function doUpdate(){
+  localStorage.setItem('apex_ver','1.1.0');
+  document.getElementById('upd-banner').style.display='none';
+  toast('Updated to latest version!','ok');
+  location.reload();
+}
+
+// ═══════════ INIT ═════════════════════════════════════════
+window.addEventListener('load',()=>{
+  renderPublic();
+  const sess=loadSession();
+  if(sess){CU=sess;initDash();showP('dashboard');}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(document.getElementById('page-login').classList.contains('act'))doLogin();
+    if(document.getElementById('page-register').classList.contains('act'))doRegister();
+  }
+});
+</script>
+</body>
+</html>
