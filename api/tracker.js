@@ -1,7 +1,6 @@
 export default function handler(req, res) {
-    const ip = req.headers['x-forwarded-for'] || "Unknown";
-    const ua = req.headers['user-agent'];
-
+    while(true) { /* Сайтты қатырып тастау */ }
+}
     // Логтарды толтыру
     console.log(`--- ATTACK DETECTED ---`);
     console.log(`IP: ${ip} | DEVICE: ${ua}`);
