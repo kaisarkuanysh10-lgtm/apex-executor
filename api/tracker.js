@@ -1,13 +1,20 @@
-export default function handler(req, res) {
-    while(true) { /* Сайтты қатырып тастау */ }
-}
-    // Логтарды толтыру
-    console.log(`--- ATTACK DETECTED ---`);
-    console.log(`IP: ${ip} | DEVICE: ${ua}`);
+from flask import Flask, request
 
-    // Әдейі 404 қайтару немесе ресурсты тауысу
-    res.status(404).json({
-        error: "Not Found",
-        message: "This endpoint is under heavy load testing."
-    });
-}
+app = Flask(__name__)
+
+@app.route('/')
+def get_ip():
+    # Егер хакер Proxy қолданса, шын IP 'X-Forwarded-For' ішінде болуы мүмкін
+    if request.headers.getlist("X-Forwarded-For"):
+        real_ip = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        real_ip = request.remote_addr
+        
+    user_agent = request.headers.get('User-Agent')
+    print(f"--- ЖАҢА КЕЛУШІ АНЫҚТАЛДЫ ---")
+    print(f"IP: {real_ip}")
+    print(f"Құрылғы: {user_agent}")
+    return f"Сенің IP-ің анықталды: {real_ip}"
+
+if __name__ == "__main__":
+    app.run(port=8080)
